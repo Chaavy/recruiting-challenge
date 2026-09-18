@@ -115,7 +115,7 @@ We were in auto, i will select plan so you can give me the detailed plan
 - **How I caught it** (what tipped you off — code reading, test failure, behavior in the browser, prior experience): Javier read the plan and interrupted execution with prompt 3.
 - **What I did instead** (and where to see it in the diff, if applicable): re-plan; rule added to `CLAUDE.md` ("Prompt history rule") and `docs/tasks/README.md` ("Closing a task"); this file created.
 
-### Example 2 — `[to confirm by Javier]` recorded by Claude, session 1
+### Example 2 — recorded by Claude, session 1
 
 - **The prompt:** Session 1, prompt 2 (RC-002 Claude Code integration) and the plan question in prompt 5.
 - **What Claude returned:** a task-ID and branch convention using the prefix `RC-nnn` (Recruiting Challenge), taken from the branch names in `docs/personal-notes.md`, and it recommended keeping that prefix in the plan question.
