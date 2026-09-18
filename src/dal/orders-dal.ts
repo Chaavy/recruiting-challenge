@@ -68,8 +68,14 @@ export const ordersDal = {
       .all(merchantId, limit) as OrderRow[];
   },
 
-  getById(id: string): OrderRow | undefined {
-    return db.prepare(`SELECT * FROM orders WHERE id = ?`).get(id) as OrderRow | undefined;
+  /**
+   * Tenant-scoped lookup. An order that belongs to another merchant is
+   * indistinguishable from one that does not exist: both return undefined.
+   */
+  getById(merchantId: string, id: string): OrderRow | undefined {
+    return db
+      .prepare(`SELECT * FROM orders WHERE id = ? AND merchant_id = ?`)
+      .get(id, merchantId) as OrderRow | undefined;
   },
 
   create(order: Omit<OrderRow, 'created_at'>): OrderRow {
@@ -77,7 +83,7 @@ export const ordersDal = {
       `INSERT INTO orders (id, merchant_id, customer_email, total_amount, type, status)
        VALUES (?, ?, ?, ?, ?, ?)`,
     ).run(order.id, order.merchant_id, order.customer_email, order.total_amount, order.type, order.status);
-    return this.getById(order.id)!;
+    return this.getById(order.merchant_id, order.id)!;
   },
 
   /**

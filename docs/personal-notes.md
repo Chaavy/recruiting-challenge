@@ -135,3 +135,23 @@ I have ran unit testing and now 38 tests, suites and all passed, nothing failed 
 Also I opened the dashboard and after a reload the amounts are lower - Revenue (last 30 days) were about 1400 and now is: 809.40
 Also task moved to done and index updated - task system working correctly. One thing, Claude spotted a bug that returns 500. Out of scope we will leave at it is, no time to fix new findings.
 I did not read every single line of code of the unit tests.
+JS-005: Day: 18 Sep - Hour: 3:19 am.
+Commit A:
+I validated that orders-dal.ts now has AND merchant_id = ?
+I wanted to test by my self if the 404 was working or not, asked claude the terminal request and was successful:
+1. Grab one order id from each merchant
+ACME_ID=$(curl -s -H 'X-Merchant-Id: m_acme' 'localhost:3000/api/orders?limit=1' | sed -E 's/.*"id":"([^"]+)".*/\1/')
+BISTRO_ID=$(curl -s -H 'X-Merchant-Id: m_bistro' 'localhost:3000/api/orders?limit=1' | sed -E 's/.*"id":"([^"]+)".*/\1/')
+echo "acme: $ACME_ID  bistro: $BISTRO_ID"
+2. Owner reads own order. Expect 200 and the order body
+curl -i -H 'X-Merchant-Id: m_acme' "localhost:3000/api/orders/$ACME_ID"
+3. The other merchant reads the same order. Expect 404 {"error":"not_found"}
+curl -i -H 'X-Merchant-Id: m_bistro' "localhost:3000/api/orders/$ACME_ID"
+4. A missing id. Expect the same status and body as step 3
+curl -i -H 'X-Merchant-Id: m_bistro' 'localhost:3000/api/orders/does_not_exist'
+5. The reverse direction. Expect 404, then 200
+curl -i -H 'X-Merchant-Id: m_acme' "localhost:3000/api/orders/$BISTRO_ID"
+curl -i -H 'X-Merchant-Id: m_bistro' "localhost:3000/api/orders/$BISTRO_ID"
+Now we get 404 if a tentant A asks for an order of tenant B
+I run npm run test - 46 tests passed 0 failed. I did not check every single line of the tests. 
+Commit B:

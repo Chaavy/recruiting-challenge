@@ -206,3 +206,36 @@ describe('ordersDal.revenueByMerchant', () => {
     assert.equal(ordersDal.revenueByMerchant('m_a', FROM, TO), 1000);
   });
 });
+
+describe('ordersDal.getById tenant scoping', () => {
+  test('owner gets the row', () => {
+    order({ amount: 1000 });
+    const id = `o${seq}`;
+    assert.equal(ordersDal.getById('m_a', id)?.id, id);
+  });
+
+  test("another merchant's order returns undefined", () => {
+    order({ amount: 1000, merchant: 'm_b' });
+    const id = `o${seq}`;
+    assert.equal(ordersDal.getById('m_a', id), undefined);
+    assert.equal(ordersDal.getById('m_b', id)?.merchant_id, 'm_b');
+  });
+
+  test('missing id returns undefined', () => {
+    assert.equal(ordersDal.getById('m_a', 'does_not_exist'), undefined);
+  });
+
+  test('create returns the inserted row through the scoped lookup', () => {
+    const created = ordersDal.create({
+      id: 'created_1',
+      merchant_id: 'm_a',
+      customer_email: 'ana@example.com',
+      total_amount: 1234,
+      type: 'sale',
+      status: 'completed',
+    });
+    assert.equal(created.id, 'created_1');
+    assert.equal(created.merchant_id, 'm_a');
+    assert.equal(created.total_amount, 1234);
+  });
+});

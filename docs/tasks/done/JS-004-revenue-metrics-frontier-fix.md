@@ -5,7 +5,7 @@
 | Status   | done                                   |
 | Type     | bugfix                                 |
 | Priority | 1                                      |
-| Commits  | A `f7e813b` (metrics through the DAL) · B: fill with the short SHA once Javier commits step B |
+| Commits  | A `f7e813b` (metrics through the DAL) · B `3ba0151` (revenue semantics and `to` boundary) |
 
 ## Context
 
