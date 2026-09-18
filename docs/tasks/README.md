@@ -9,6 +9,7 @@ docs/tasks/
   README.md      this file
   INDEX.md       priority-ordered list of all tasks and their status
   TEMPLATE.md    the contract every task file follows
+  BACKLOG.md     Post MVP items (PM-nn), out of scope, never picked as next task
   pending/       tasks not finished (status pending or in-progress)
   done/          finished tasks
 ```
@@ -29,6 +30,15 @@ docs/tasks/
 | `done`        | golden gate green, docs updated, ready to commit | `done/`  |
 
 Rows in `INDEX.md` are in execution order. The "next task" is always the first row with status `pending`.
+
+## Backlog (Post MVP)
+
+`BACKLOG.md` holds everything that was found or decided but is out of scope: Javier's explicit Post MVP decisions, findings noticed during a task and not fixed, items deferred from a contract's "Out" section, and the original Post MVP list from the notes. It is a list, not a set of contracts.
+
+- IDs: `PM-nn`, sequential, never reused. `JS-nnn` stays reserved for work that gets committed, so commit IDs stay contiguous.
+- Backlog rows are not part of the lifecycle above and have no `pending` status. "Next task" only reads `INDEX.md`, so a backlog item can never be picked up by accident.
+- **Adding:** when a task notices something it will not fix, it goes in the task's session log and gets a new row in `BACKLOG.md` when the task is closed (next free `PM-nn`, with origin, reason and code location).
+- **Promoting:** Javier decides. Copy `TEMPLATE.md` to `pending/JS-nnn-<slug>.md` with the next free `JS-nnn`, cite the `PM-nn` in Context, add the row to `INDEX.md`, and set the backlog row's `State` to `promoted → JS-nnn`. The row is kept.
 
 ## Creating a task
 

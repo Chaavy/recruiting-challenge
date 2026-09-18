@@ -239,6 +239,21 @@ After that, we also need to update the tests accordingly. As a check, just valid
 **What the model returned:** read-only impact check (the dashboard's single `fetch` helper only sends GETs, `index.html` posts nothing, the POST route is the only caller of `ordersDal.create`, the seed always passes `type`), then a plan: make `type` required in the validator, give every invalid-case fixture a valid `type` so each test fails for one reason only, add missing/undefined/null `type` cases, update api.md, architecture.md, the task record and this file. It also pointed out that `src/db.ts` still declares `DEFAULT 'sale'` and proposed leaving it.
 **Accepted / rejected / refined:** Javier stayed in plan mode once to comment on the DB default: "for now we are good with having the validation explicity before actually reaching the orderDal. But in the feature if another service uses orderdDal to create an order we are going to still have the same problem -> default -> sale. We will leave this change out of scope since it requires a DDL script." The model added the nuance that `ordersDal.create` already requires `type` at compile time, so the default is reachable only through raw SQL; recorded as a known gap in architecture.md. Javier approved; the model applied it: `tsc` exit 0; 96 tests, 96 pass, 0 fail/skipped/todo/cancelled.
 
+**Prompt 6 (verbatim):**
+```text
+I have revieed evrything and looks good for me. 
+While I do the commit, could you remind me which notes I have decied to move post MVP. I want to add them there by myself. Do not edit anything, I want to do it manual
+```
+**What the model returned:** read the Post MVP section of `docs/personal-notes.md` (read-only, nothing edited), saw it still ended at item 8, and listed: eight explicit Post MVP decisions (ESLint + SQL lint gate, GitHub Actions, dependency audit, custom errors, mixed timestamps, float revenue field, DB default on `orders.type`, webhook DLQ), five noticed-not-fixed findings, and six items deferred in the webhook contracts. It also pointed out that Javier's review note "type is not obligatory at validate-order.ts level" says the opposite of the code.
+**Accepted / rejected / refined:** Javier committed JS-005 B as `8d67565`, then changed approach in prompt 7: keep the list in the task system instead of in his memory or his notes.
+
+**Prompt 7 (verbatim, sent in plan mode):**
+```text
+Lets do something, the great advantage we have with this task management system is that we do not have to remember everything or leave to the memory. So for the Post MVP notes, I would like you to add a backlog tasks that is out of scope for this challenge but I would like you to mark it as Post MVP.
+```
+**What the model returned:** three plan questions with a recommendation each: shape (one `BACKLOG.md` vs a contract per item vs rows in `INDEX.md`), which item groups to include, and IDs (`PM-nn` vs continuing `JS-nnn`). It flagged the constraint that "next task" reads the first `pending` row of `INDEX.md`, so backlog items must not look pending. After the answers: created `docs/tasks/BACKLOG.md` with 27 rows in four groups (origin, Javier's quoted reason, code location, state), replaced the Post MVP sentence in `INDEX.md` with a link, added a "Backlog (Post MVP)" section to `docs/tasks/README.md` (adding and promoting rules), filled JS-005's `Commits` row with `8d67565`.
+**Accepted / rejected / refined:** Javier chose one `BACKLOG.md` file, all four item groups, and `PM-nn` IDs that receive a `JS-nnn` only when promoted; approved the plan without changes.
+
 ---
 
 ## What Claude (or your AI tool) got wrong

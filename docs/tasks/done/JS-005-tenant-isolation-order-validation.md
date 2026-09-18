@@ -5,7 +5,7 @@
 | Status   | done                                   |
 | Type     | bugfix                                 |
 | Priority | 2                                      |
-| Commits  | A `e9f003b` (tenant isolation) · B: fill with the short SHA once Javier commits step B (input validation) |
+| Commits  | A `e9f003b` (tenant isolation) · B `8d67565` (input validation, `type` required) |
 
 ## Context
 
