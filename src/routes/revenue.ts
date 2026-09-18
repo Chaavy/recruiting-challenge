@@ -6,7 +6,8 @@ export const revenueRouter = Router();
 /**
  * GET /api/revenue?from=YYYY-MM-DD&to=YYYY-MM-DD
  *
- * Returns total revenue for the authenticated merchant in the given date range.
+ * Returns revenue (completed sales minus completed refunds, integer cents) for
+ * the authenticated merchant from `from` inclusive to the end of the `to` day.
  */
 revenueRouter.get('/', (req, res) => {
   const from = typeof req.query.from === 'string' ? req.query.from : undefined;
@@ -16,7 +17,7 @@ revenueRouter.get('/', (req, res) => {
     return;
   }
 
-  const total = ordersDal.sumAmountByMerchant(req.merchantId!, from, to);
+  const total = ordersDal.revenueByMerchant(req.merchantId!, from, to);
   res.json({
     merchant_id: req.merchantId,
     from,

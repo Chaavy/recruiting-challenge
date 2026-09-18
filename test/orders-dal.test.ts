@@ -144,3 +144,65 @@ describe('ordersDal.topCustomers', () => {
     assert.equal(ordersDal.topCustomers('m_a', 5).length, 1);
   });
 });
+
+describe('ordersDal.revenueByMerchant', () => {
+  const FROM = '2026-08-01';
+  const TO = '2026-08-31';
+
+  test('golden case: completed sale 10000 + completed refund 3000 => 7000', () => {
+    order({ amount: 10000 });
+    order({ amount: 3000, type: 'refund' });
+    assert.equal(ordersDal.revenueByMerchant('m_a', '2026-09-01', '2026-09-01'), 7000);
+  });
+
+  test('merchant with no orders returns 0', () => {
+    assert.equal(ordersDal.revenueByMerchant('m_a', FROM, TO), 0);
+  });
+
+  test('non-completed rows are excluded', () => {
+    order({ amount: 1000, createdAt: '2026-08-10T10:00:00.000Z' });
+    order({ amount: 5000, status: 'pending', createdAt: '2026-08-10T10:00:00.000Z' });
+    order({ amount: 700, type: 'refund', status: 'cancelled', createdAt: '2026-08-10T10:00:00.000Z' });
+    assert.equal(ordersDal.revenueByMerchant('m_a', FROM, TO), 1000);
+  });
+
+  test('refunds larger than sales give a negative revenue', () => {
+    order({ amount: 1000, createdAt: '2026-08-10T10:00:00.000Z' });
+    order({ amount: 2500, type: 'refund', createdAt: '2026-08-11T10:00:00.000Z' });
+    assert.equal(ordersDal.revenueByMerchant('m_a', FROM, TO), -1500);
+  });
+
+  test('bare-date `to` includes orders from that whole day (ISO created_at)', () => {
+    order({ amount: 1000, createdAt: '2026-08-31T12:00:00.000Z' });
+    order({ amount: 1, createdAt: '2026-08-31T23:59:59.999Z' });
+    assert.equal(ordersDal.revenueByMerchant('m_a', FROM, TO), 1001);
+  });
+
+  test('bare-date `to` includes orders from that day stored in SQLite CURRENT_TIMESTAMP format', () => {
+    order({ amount: 1000, createdAt: '2026-08-31 12:00:00' });
+    assert.equal(ordersDal.revenueByMerchant('m_a', FROM, TO), 1000);
+  });
+
+  test('the day after a bare-date `to` is excluded', () => {
+    order({ amount: 1000, createdAt: '2026-09-01T00:00:00.000Z' });
+    assert.equal(ordersDal.revenueByMerchant('m_a', FROM, TO), 0);
+  });
+
+  test('full-timestamp `to` stays exclusive', () => {
+    order({ amount: 1000, createdAt: '2026-08-31T12:00:00.000Z' });
+    assert.equal(ordersDal.revenueByMerchant('m_a', FROM, '2026-08-31T12:00:00.000Z'), 0);
+    assert.equal(ordersDal.revenueByMerchant('m_a', FROM, '2026-08-31T12:00:00.001Z'), 1000);
+  });
+
+  test('`from` is inclusive from midnight', () => {
+    order({ amount: 1000, createdAt: '2026-08-01T00:00:00.000Z' });
+    order({ amount: 5000, createdAt: '2026-07-31T23:59:59.999Z' });
+    assert.equal(ordersDal.revenueByMerchant('m_a', FROM, TO), 1000);
+  });
+
+  test('rows of another merchant are excluded', () => {
+    order({ amount: 1000, createdAt: '2026-08-10T10:00:00.000Z' });
+    order({ amount: 9000, merchant: 'm_b', createdAt: '2026-08-10T10:00:00.000Z' });
+    assert.equal(ordersDal.revenueByMerchant('m_a', FROM, TO), 1000);
+  });
+});

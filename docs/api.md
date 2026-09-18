@@ -16,8 +16,17 @@ Get a single order by ID.
 ## `POST /api/orders`
 Body: `{ customer_email, total_amount, type? }`.
 
-## `GET /api/revenue?from=...&to=...`
-Total revenue for the merchant in the date range.
+## `GET /api/revenue?from=YYYY-MM-DD&to=YYYY-MM-DD`
+Revenue for the merchant in the date range. Both query params are required (`400 { "error": "missing_date_range" }` otherwise).
+
+```json
+{ "merchant_id": "m_acme", "from": "2026-08-19", "to": "2026-09-18", "revenue_cents": 123400, "revenue": 1234 }
+```
+
+- `revenue_cents`: **completed sales minus completed refunds**, integer cents. Refund rows are stored with a positive `total_amount` and `type = "refund"`; the sign is applied here. Non-completed orders are excluded. Can be negative.
+- `from` is inclusive from `00:00:00` UTC.
+- `to` as a bare date (`YYYY-MM-DD`) includes that **whole day**. A full ISO timestamp for `to` is treated as an exclusive bound.
+- `revenue`: legacy float field (`revenue_cents / 100`). Do not use for arithmetic; kept for compatibility, removal tracked as Post MVP.
 
 ## `GET /api/metrics/summary`
 Dashboard summary for the merchant. All queries go through `ordersDal.summaryByMerchant`.

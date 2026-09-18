@@ -1,4 +1,5 @@
 import { db } from '../db.js';
+import { toExclusiveUpperBound } from '../lib/date-range.js';
 
 /**
  * Signed, completed-only amount used by every money aggregate:
@@ -80,17 +81,18 @@ export const ordersDal = {
   },
 
   /**
-   * Sum total_amount over a date range for a merchant.
-   * Used by the revenue endpoint.
+   * Revenue for a merchant in [from, to]: completed sales minus completed
+   * refunds, integer cents. `from` is inclusive. A bare-date `to` includes the
+   * whole day; a full timestamp `to` is exclusive. Used by GET /api/revenue.
    */
-  sumAmountByMerchant(merchantId: string, from: string, to: string): number {
+  revenueByMerchant(merchantId: string, from: string, to: string): number {
     const row = db
       .prepare(
-        `SELECT COALESCE(SUM(total_amount), 0) AS total
+        `SELECT COALESCE(SUM(${SIGNED_COMPLETED_AMOUNT_SQL}), 0) AS total
          FROM orders
          WHERE merchant_id = ? AND created_at >= ? AND created_at < ?`,
       )
-      .get(merchantId, from, to) as { total: number };
+      .get(merchantId, from, toExclusiveUpperBound(to)) as { total: number };
     return row.total;
   },
 

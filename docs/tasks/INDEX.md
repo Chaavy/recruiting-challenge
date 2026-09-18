@@ -4,7 +4,7 @@ Rows are in execution order. The next task is the first row with status `pending
 
 | ID | Title | Type | Status | Spec |
 |----|-------|------|--------|------|
-| JS-004 | Revenue and Metrics frontier fix | bugfix | pending | [pending/JS-004-revenue-metrics-frontier-fix.md](pending/JS-004-revenue-metrics-frontier-fix.md) |
+| JS-004 | Revenue and Metrics frontier fix | bugfix | done | [done/JS-004-revenue-metrics-frontier-fix.md](done/JS-004-revenue-metrics-frontier-fix.md) |
 | JS-005 | Tenant isolation on order lookup and input validation on order creation | bugfix | pending | [pending/JS-005-tenant-isolation-order-validation.md](pending/JS-005-tenant-isolation-order-validation.md) |
 | JS-006 | Golden gate: pre-commit hook and regression over JS-004 / JS-005 | bugfix | pending | [pending/JS-006-golden-gate-precommit.md](pending/JS-006-golden-gate-precommit.md) |
 | JS-007 | Webhooks slice A: schema, DAL and subscription endpoints | feature | pending | [pending/JS-007-webhooks-subscriptions.md](pending/JS-007-webhooks-subscriptions.md) |

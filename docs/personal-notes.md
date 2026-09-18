@@ -129,3 +129,9 @@ Validated that the documentation is also updated
 I also validated the change beyond the plan and I accept the determisitic tie-breaker.
 I did not read every single line of code of the test.
 Commit B:
+I reviewed data-range.ts and the function looks good for me.
+orders-dal.ts -> new function revenueByMerchant replaces sumAmountByMerchant and also it uses the SIGNED_COMPLETED_AMOUNT_SQL from commit A. 
+I have ran unit testing and now 38 tests, suites and all passed, nothing failed also the npx tsc --noEmit -> successful.
+Also I opened the dashboard and after a reload the amounts are lower - Revenue (last 30 days) were about 1400 and now is: 809.40
+Also task moved to done and index updated - task system working correctly. One thing, Claude spotted a bug that returns 500. Out of scope we will leave at it is, no time to fix new findings.
+I did not read every single line of code of the unit tests.

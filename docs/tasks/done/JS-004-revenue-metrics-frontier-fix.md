@@ -2,10 +2,10 @@
 
 | Field    | Value                                  |
 |----------|----------------------------------------|
-| Status   | in-progress                            |
+| Status   | done                                   |
 | Type     | bugfix                                 |
 | Priority | 1                                      |
-| Commits  | filled at close: short SHAs of the commits that ship this task (source for signoff.md) |
+| Commits  | A `f7e813b` (metrics through the DAL) · B: fill with the short SHA once Javier commits step B |
 
 ## Context
 
@@ -95,3 +95,9 @@ Move the metrics queries into `ordersDal`, delete the second connection, and mak
 ## Session log
 
 - 2026-09-18 — Contract created in the JS-003 tasks-definition session from Javier's "Notes after discussion". Javier's decisions: include the `to` boundary fix; timestamps and float money to Post MVP. No work started.
+- 2026-09-18 — Execution session (same Claude Code session as JS-003, id `c9c48822-4fb8-46ba-a62e-2cd24be43f40`). Plan approved with five decisions by Javier: (1) one module-level constant SQL fragment for the signed amount ("it is not user input is a rule we can define in code"); (2) `top-customers.order_count` counts all rows; (3) `sumAmountByMerchant` removed ("I have already checked and yes no other uses"); (4) two commits, A metrics through the DAL, B revenue semantics + `to` boundary; (5) Claude allowed to run `npx tsc --noEmit`.
+  - Step A: `summaryByMerchant` and `topCustomers` in the DAL, `metrics.ts` rewritten without its own connection, `test/orders-dal.test.ts` (12 tests) and `test/metrics.test.ts` (5 tests), api.md and architecture.md updated. Beyond the plan: a deterministic tie-breaker (`customer_email ASC`) was added to `topCustomers` after Claude's own fixture produced a tie that SQL ordered arbitrarily (caught by a failing test, not by Javier); reported to Javier, who committed A without objection. Commit `f7e813b`.
+  - Step B: `src/lib/date-range.ts` (`toExclusiveUpperBound`), `revenueByMerchant` replaces `sumAmountByMerchant`, `revenue.ts` calls it, `test/date-range.test.ts` (5), revenue cases in `test/orders-dal.test.ts` (10), `test/revenue.test.ts` (4). The boundary fix is covered for both `created_at` formats present in the table (ISO with `T` from the seed, `YYYY-MM-DD HH:MM:SS` from SQLite `CURRENT_TIMESTAMP` on POST); the format mix itself stays Post MVP.
+  - Golden gate by hand: `npx tsc --noEmit` exit 0; `npm test` 38 tests, 38 pass, 0 fail, 0 skipped, 0 todo, 0 cancelled.
+  - Noticed, not fixed (same class or out of scope): `listByMerchant` has the same `to` boundary bug and does not use the helper yet; `GET /api/orders?limit=abc` and `top-customers?limit=abc` bind `NaN` and return 500; the float `revenue` field remains; `detail` string in the revenue 400 remains (Post MVP custom errors).
+  - Semantics fixed in this task (product decisions Javier can revisit): `total_orders` and `order_count` count every row; `avg_order_value_cents` averages completed sales only; `total_spent` and `revenue_cents` are completed sales minus completed refunds and may be negative.

@@ -160,6 +160,37 @@ Plan approved, continue
 **What the model returned:** created `JS-004` … `JS-010` contracts, rewrote `docs/tasks/INDEX.md`, changed the golden-gate task ID from JS-004 to JS-006 in `CLAUDE.md` (three lines) and `docs/architecture.md` (one line). The auto-mode classifier denied `sed` on `CLAUDE.md` and a `npx tsc --noEmit` baseline check; the ID edits were then applied with the editor tool under Javier's explicit approval, the type-check baseline was not run. Reported that `CLAUDE.md` still lists ESLint in the golden gate and needs Javier's own edit now that ESLint is Post MVP.
 **Accepted / rejected / refined:** Javier chose Option A, four webhook files, the `to` fix in scope, and rejected ESLint in JS-006 ("Eslint add new dependencies which means possible new vulnerabilities could be found - due to the time i have, please move it to post mvp").
 
+### Session 3 — JS-004 Revenue and Metrics frontier fix — 2026-09-18
+
+Session id: `c9c48822-4fb8-46ba-a62e-2cd24be43f40` (same Claude Code session as Session 2, continued after Javier committed JS-003).
+
+**Prompt 1 (verbatim):**
+```text
+next task
+```
+**What the model returned:** took JS-004 (first `pending` row), confirmed the tree was clean after commit `29d2bd2`, and answered with a plan: `src/lib/date-range.ts` helper, `revenueByMerchant` replacing `sumAmountByMerchant`, `summaryByMerchant` + `topCustomers` in the DAL, `metrics.ts` without its own connection, flat test files, docs, and five decisions to take: (1) one constant SQL fragment for the signed amount despite the "no interpolation" rule; (2) `order_count` all rows vs completed only; (3) remove `sumAmountByMerchant`; (4) one or two commits; (5) permission to run `npx tsc --noEmit` after the classifier denied it in Session 2.
+**Accepted / rejected / refined:** see prompt 2.
+
+**Prompt 2 (verbatim):**
+```text
+1. I accept the one module-level consant string. As you said, it is not user input is a rule we can define in code and accept it as good case.
+2. all rows
+3. I have already checked and yes no other uses, remove it.
+4. Two different tests, two different commits.
+5. I give you the permission to execute it by your self
+
+approved
+```
+**What the model returned:** step A only (so commit A could be made alone): task set `in-progress`; DAL constant `SIGNED_COMPLETED_AMOUNT_SQL`, `summaryByMerchant`, `topCustomers`; `metrics.ts` rewritten through the DAL; `test/orders-dal.test.ts` (12) and `test/metrics.test.ts` (5); api.md metrics fields; architecture.md DAL paragraph. First run: 1 failing test caused by the model's own fixture (a tie on `total_spent` between two customers, ordered arbitrarily by SQL); the model changed the fixture and added an `ORDER BY … customer_email ASC` tie-breaker with its own test, and reported this as a change beyond the plan. `tsc` exit 0, 19 tests pass. Stopped and asked Javier to commit A.
+**Accepted / rejected / refined:** Javier reviewed and committed A as `f7e813b` ("I review the changes made, run the commands to validate the changes, and added comments to personal notes of what I checked and what I did not check"). No objection to the tie-breaker.
+
+**Prompt 3 (verbatim):**
+```text
+Commit A done, continue
+```
+**What the model returned:** step B: `src/lib/date-range.ts` (`toExclusiveUpperBound`), `revenueByMerchant` with the shared fragment and `status = 'completed'`, `sumAmountByMerchant` removed, `revenue.ts` updated, `test/date-range.test.ts` (5), 10 revenue cases in `test/orders-dal.test.ts` including the SQLite `CURRENT_TIMESTAMP` format, `test/revenue.test.ts` (4); api.md revenue section and architecture.md `lib/` entry. Gate by hand: `tsc` exit 0; 38 tests, 38 pass, 0 fail/skipped/todo/cancelled. Live check on port 3055 against the seeded DB: `m_acme` revenue 2026-08-19..2026-09-18 = 80940 cents, equal to a direct SQL cross-check; the old formula on the same data gave 148648 (refunds added, today excluded). Task closed: status `done`, session log, moved to `docs/tasks/done/`, INDEX updated, this entry.
+**Accepted / rejected / refined:** pending Javier's line-by-line review and commit B; the `Commits` row of the task file still needs B's SHA.
+
 ---
 
 ## What Claude (or your AI tool) got wrong

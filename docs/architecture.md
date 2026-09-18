@@ -16,7 +16,10 @@
   SQL fragment in the DAL: a completed sale counts positive, a completed refund
   counts negative, anything else counts 0.
 - **`routes/`** — Express routers, one file per resource.
-- **`lib/`** — utilities. Empty at the moment but reserved for shared helpers.
+- **`lib/`** — shared helpers with no DB access. `date-range.ts` turns a bare
+  `YYYY-MM-DD` upper bound into the next day's midnight so `created_at < ?`
+  includes the whole requested day (used by revenue; `listByMerchant` has the
+  same boundary and does not use it yet).
 
 ## Data model
 
