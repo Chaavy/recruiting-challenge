@@ -5,7 +5,7 @@
 | Status   | done                                   |
 | Type     | bugfix                                 |
 | Priority | 3                                      |
-| Commits  | filled at close: short SHAs of the commits that ship this task (source for signoff.md) |
+| Commits  | `7fdcdd7` (first commit checked by the pre-commit hook) |
 
 ## Context
 

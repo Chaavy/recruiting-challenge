@@ -32,5 +32,32 @@ export function initSchema(): void {
 
     CREATE INDEX IF NOT EXISTS idx_orders_merchant ON orders(merchant_id);
     CREATE INDEX IF NOT EXISTS idx_orders_created ON orders(created_at);
+
+    -- Webhooks (JS-007). One subscription per merchant: merchant_id is UNIQUE.
+    -- secret is stored as is because HMAC signing needs the raw value.
+    CREATE TABLE IF NOT EXISTS webhook_subscriptions (
+      id TEXT PRIMARY KEY,
+      merchant_id TEXT NOT NULL UNIQUE REFERENCES merchants(id),
+      url TEXT NOT NULL,
+      secret TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+
+    -- Outbox of events to deliver. payload is the exact JSON string that is
+    -- sent, stored once so the event stays immutable. Written from JS-008 on.
+    CREATE TABLE IF NOT EXISTS webhook_events (
+      id TEXT PRIMARY KEY,
+      merchant_id TEXT NOT NULL REFERENCES merchants(id),
+      event_type TEXT NOT NULL,
+      payload TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'pending',
+      attempts INTEGER NOT NULL DEFAULT 0,
+      next_attempt_at TEXT NOT NULL,
+      last_error TEXT,
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      delivered_at TEXT
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_webhook_events_due ON webhook_events(status, next_attempt_at);
   `);
 }

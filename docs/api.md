@@ -59,3 +59,30 @@ Customers ranked by money kept. Optional query `limit` (default 5).
 - `order_count`: every order row of that customer (sales and refunds, any status).
 - `total_spent`: completed sales minus completed refunds, integer cents. Can be negative.
 - Ordered by `total_spent` descending, then `customer_email` ascending for ties.
+
+## Webhooks — subscription management
+
+A merchant registers one HTTPS URL to receive order events. **Status: subscription management only (JS-007).** Events are stored from JS-008 and delivered from JS-009; until those ship, nothing is sent to the URL.
+
+All three endpoints act on the subscription of the merchant in `X-Merchant-Id`. There is at most one per merchant.
+
+### `POST /api/webhooks/subscription`
+Body: `{ "url": "https://example.com/hooks/orders" }`.
+
+```json
+{ "subscription": { "id": "dba372b9-...", "url": "https://example.com/hooks/orders", "created_at": "2026-09-18 17:55:58" }, "secret": "<64 hex characters>" }
+```
+
+- `201` on success. **`secret` is returned only in this response.** It is the key used to sign deliveries (HMAC-SHA256); store it. It cannot be read again; to get a new one, delete and re-create.
+- `400 { "error": "invalid_url" }` when the URL is not acceptable. Rules: `https` only; no credentials in the URL; at most 2048 characters; the host must not be `localhost`, a loopback, private (`10/8`, `172.16/12`, `192.168/16`), link-local (`169.254/16`, includes cloud metadata), CGNAT (`100.64/10`) or unspecified address, in IPv4 or IPv6, including IPv4 embedded in IPv6. Disguised IPv4 forms (`https://2130706433/`, `https://0x7f000001/`) are normalised before the check. The stored `url` is the normalised form.
+- `409 { "error": "subscription_exists" }` when the merchant already has one.
+
+### `GET /api/webhooks/subscription`
+`200 { "subscription": { "id", "url", "created_at" } }` — never includes the secret. `404 { "error": "not_found" }` when there is none.
+
+### `DELETE /api/webhooks/subscription`
+`204` with an empty body. `404 { "error": "not_found" }` when there is none.
+
+### Development flag
+`WEBHOOK_ALLOW_INSECURE_URLS=1` (exactly `1`, read per request, default off) additionally accepts **loopback hosts, over `http` or `https`**, so a receiver can run on the same machine (`http://localhost:4000/hook`). Private ranges, link-local, credentials and `http` to public hosts stay rejected. Never set it in production.
+

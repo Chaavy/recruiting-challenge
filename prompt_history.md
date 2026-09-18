@@ -302,6 +302,35 @@ add it now, in this commit I want to activate it.
 **What the model returned:** appended the activation to the JS-006 session log and these two prompts to this entry, without rewriting the earlier lines that said the hook was unset; re-ran `npm run check`.
 **Accepted / rejected / refined:** Javier decided the hook is activated within the JS-006 commit, so that commit is the first one the gate checks.
 
+### Session 6 — JS-007 Webhooks slice A: schema, DAL and subscription endpoints — 2026-09-18
+
+Session id: `c9c48822-4fb8-46ba-a62e-2cd24be43f40` (same Claude Code session, continued after Javier committed JS-006 as `7fdcdd7`, the first commit checked by the pre-commit hook).
+
+**Prompt 1 (verbatim):**
+```text
+next task
+```
+**What the model returned:** took JS-007. Plan: two tables in `initSchema`, a pure URL validator that checks the hostname after WHATWG parsing (so integer/hex IPv4 cannot bypass the block list), `webhooksDal`, three merchant-scoped endpoints with the secret returned once and UNIQUE as the 409 backstop, three test files, docs. Stated two facts before approval: the secret has to be stored in plaintext for HMAC (backlog row), and the `server.ts` mount cannot be unit-tested. Two decisions asked: scope of `WEBHOOK_ALLOW_INSECURE_URLS` (A loopback only, recommended; B also private ranges) and one commit vs two.
+**Accepted / rejected / refined:** see prompt 2.
+
+**Prompt 2 (verbatim):**
+```text
+1. For now we will go with Option A.
+2. As you said, probably I will not finish the 4 slices completes due to time. So one commit ofr the slice. 
+
+approved
+```
+**What the model returned:** built the slice; 88 new tests, all green on the first run; `npm run check` PASSED with 184 tests. Live check of the real mount on port 3055: every status as designed, secret absent from GET and from the server log, no row left behind. The model's first live attempt returned 400 for every call because of its own zsh quoting mistake in the check script (not a server bug); it said so and re-ran with literal arguments. Docs: Webhooks section in api.md, "Webhooks frontier" in architecture.md. Backlog: PM-30 (plaintext secret), PM-11 extended. JS-006 `Commits` row filled with `7fdcdd7`. Task closed and moved to `done/`.
+**Accepted / rejected / refined:** Javier chose option A and a single commit. Pending: his line-by-line review and the commit, which now runs through the hook.
+
+**Prompt 3 (verbatim):**
+```text
+I authorize to add the new frontier to CLAUDE.md
+```
+(IDE file open at the time: `src/server.ts`.)
+**What the model returned:** added Webhooks to the "Frontiers identified so far" sentence of `CLAUDE.md`, with the slice range and a pointer to the architecture doc; logged the authorisation in the JS-007 task file; re-ran `npm run check`.
+**Accepted / rejected / refined:** Javier authorised the one edit the model had left for him because the file is protected.
+
 ---
 
 ## What Claude (or your AI tool) got wrong

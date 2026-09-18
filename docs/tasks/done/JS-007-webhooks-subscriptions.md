@@ -2,7 +2,7 @@
 
 | Field    | Value                                  |
 |----------|----------------------------------------|
-| Status   | pending                                |
+| Status   | done                                   |
 | Type     | feature                                |
 | Priority | 4                                      |
 | Commits  | filled at close: short SHAs of the commits that ship this task (source for signoff.md) |
@@ -103,3 +103,12 @@ curl -X DELETE -H 'X-Merchant-Id: m_acme' localhost:3000/api/webhooks/subscripti
 ## Session log
 
 - 2026-09-18 — Contract created in the JS-003 tasks-definition session. Javier accepted: outbox tables, payload/table design, HMAC over asymmetric keys, SSRF prevention, three subscription endpoints, four slices. No work started.
+- 2026-09-18 — Execution session (Claude Code session `c9c48822-4fb8-46ba-a62e-2cd24be43f40`). Plan approved with two decisions by Javier: (1) `WEBHOOK_ALLOW_INSECURE_URLS=1` follows option A, loopback hosts only ("For now we will go with Option A"); (2) one commit for the slice ("probably I will not finish the 4 slices completes due to time"). Two facts stated before approval: the secret is stored in plaintext because HMAC needs the raw value (PM-30), and the mount in `server.ts` cannot be unit-tested because the file listens and seeds on import.
+  - Built: two tables + index in `initSchema`; `src/lib/webhook-url.ts` (pure, checks the hostname after WHATWG URL parsing); `src/dal/webhooks-dal.ts`; `src/routes/webhooks.ts` (POST/GET/DELETE, secret once, UNIQUE as backstop mapped to 409); mount in `server.ts`.
+  - Beyond the contract's list, inside its intent: CGNAT `100.64/10`, IPv4 embedded in IPv6 (mapped, compatible, NAT64), `*.localhost`, trailing-dot hosts, 2048-character limit, and tests proving that integer / hex / octal / short IPv4 forms are rejected. With the flag on, `http` is accepted only for loopback hosts; `http` to a public host stays rejected.
+  - Tests: `test/webhook-url.test.ts` (56), `test/webhooks-dal.test.ts` (9, includes schema objects and `webhook_events` defaults), `test/webhooks.test.ts` (23, includes the simulated concurrent creation and the env flag). All passed on the first run.
+  - Golden gate: `npm run check` → `golden gate: PASSED - tsc clean, 184 tests, 0 fail, 0 cancelled, 0 skipped, 0 todo`.
+  - Live check on port 3055 against the seeded DB (real mount in `server.ts`): GET none 404; POST `http://` 400; POST `https://169.254.169.254` 400; POST `https://2130706433` 400; POST valid 201 with a 64-hex secret; second POST 409; GET own 200 without secret; `m_bistro` GET 404 and DELETE 404; DELETE own 204; GET 404. No row left, no secret in the server log. Claude's first attempt at this check returned 400 everywhere because of its own shell quoting (zsh does not word-split an unquoted variable, so curl got the header flag and value as one argument); re-run with literal arguments.
+  - Side effect to know: starting the server created the two new tables in the local `data/dashboard.db` (expected, `IF NOT EXISTS`).
+  - Noticed, not fixed: unknown `X-Merchant-Id` on POST hits the FK and returns 500, same as orders (PM-11 extended); `CLAUDE.md` "Frontiers identified so far" does not list Webhooks (protected file, Javier's edit). Backlog: PM-30 added, PM-11 extended.
+  - Follow-up in the same session, before the commit: Javier authorised the protected-file edit ("I authorize to add the new frontier to CLAUDE.md"). `CLAUDE.md` "Frontiers identified so far" now lists Webhooks with a pointer to `docs/architecture.md`. No other line of that file changed.

@@ -5,7 +5,7 @@ Claude does not edit this file, anything under `.claude/`, or `docs/personal-not
 
 ## Project
 
-Small merchant sales dashboard (T1 recruiting challenge). A static page in `public/` calls an Express API in `src/` that reads a SQLite database. The merchant is chosen by the `X-Merchant-Id` header. Frontiers identified so far: Merchant, Orders, Metrics, Revenue, Analytics (not implemented), Auditlog (not implemented).
+Small merchant sales dashboard (T1 recruiting challenge). A static page in `public/` calls an Express API in `src/` that reads a SQLite database. The merchant is chosen by the `X-Merchant-Id` header. Frontiers identified so far: Merchant, Orders, Metrics, Revenue, Webhooks (Feature B, built in slices JS-007 to JS-010; see "Webhooks frontier" in `docs/architecture.md`), Analytics (not implemented), Auditlog (not implemented).
 
 Read before touching code: `docs/architecture.md`, `docs/api.md`, `docs/personal-notes.md` (Javier's plan, priorities and branch strategy; read-only for Claude).
 
