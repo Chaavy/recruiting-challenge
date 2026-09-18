@@ -331,6 +331,28 @@ I authorize to add the new frontier to CLAUDE.md
 **What the model returned:** added Webhooks to the "Frontiers identified so far" sentence of `CLAUDE.md`, with the slice range and a pointer to the architecture doc; logged the authorisation in the JS-007 task file; re-ran `npm run check`.
 **Accepted / rejected / refined:** Javier authorised the one edit the model had left for him because the file is protected.
 
+### Session 7 — JS-008 Webhooks slice B: transactional outbox — 2026-09-18
+
+Session id: `c9c48822-4fb8-46ba-a62e-2cd24be43f40` (same Claude Code session, continued after Javier committed JS-007 as `d940063`).
+
+**Prompt 1 (verbatim):**
+```text
+next task
+```
+**What the model returned:** took JS-008. Plan: `insertEvent` and tenant-scoped `getEventById` in `webhooksDal`; new `src/services/orders-service.ts` writing the order and the `order.created` event in one synchronous `db.transaction` with an injectable `now`; pure payload builder, payload stored as the exact JSON string; POST route calls the service; tests including rollback by stubbing `insertEvent`; docs; live check with cleanup. Three decisions asked: (1) confirm "no subscription, no event row" (flagged in the contract) vs always storing for a future audit log, recommended keeping it; (2) normalise `order.created_at` to ISO UTC in the payload only, because POSTed orders carry SQLite's format without timezone (PM-05), recommended yes; (3) one commit.
+**Accepted / rejected / refined:** see prompt 2.
+
+**Prompt 2 (verbatim):**
+```text
+1. I will take the Business rule decision. A merchant will only receive events if the subscription was made before an the order creation. If a order is created and later decided to subscribe he won receive these notifications. This is a business rule I decide. 
+2. I would go with your suggestion
+3. We will go with one commit.
+
+Approved
+```
+**What the model returned:** built the slice; 26 new tests; `npm run check` PASSED with 210 tests on the first run. Live check on port 3055: subscribed merchant's order produced one `pending` `order.created` row with the documented payload and ISO timestamps; an unsubscribed merchant's refund and an invalid body produced none; all probe rows removed afterwards (81 orders, 0 events, 0 subscriptions, as before). Docs: "Webhooks — events" in api.md (rule, event types table, payload, idempotency), services layer and outbox in architecture.md. JS-007 `Commits` row filled with `d940063`. Task closed and moved to `done/`.
+**Accepted / rejected / refined:** Javier turned question 1 into an explicit business rule of his own (no backfill), accepted the ISO normalisation, chose one commit. Pending: his review and the commit through the hook.
+
 ---
 
 ## What Claude (or your AI tool) got wrong

@@ -2,7 +2,7 @@
 
 | Field    | Value                                  |
 |----------|----------------------------------------|
-| Status   | pending                                |
+| Status   | done                                   |
 | Type     | feature                                |
 | Priority | 5                                      |
 | Commits  | filled at close: short SHAs of the commits that ship this task (source for signoff.md) |
@@ -93,3 +93,12 @@ Introduce `src/services/orders-service.ts` with `createOrder(merchantId, input)`
 ## Session log
 
 - 2026-09-18 — Contract created in the JS-003 tasks-definition session. Decision (Claude proposed, Javier to confirm in the plan phase): no event row when the merchant has no subscription. No work started.
+- 2026-09-18 — Execution session (Claude Code session `c9c48822-4fb8-46ba-a62e-2cd24be43f40`). Plan approved with three decisions by Javier:
+  1. **Business rule, his decision:** "A merchant will only receive events if the subscription was made before an the order creation. If a order is created and later decided to subscribe he won receive these notifications. This is a business rule I decide." So: no subscription, no event row, no backfill. Claude had recommended the same outcome for a technical reason (rows the dispatcher could only fail); Javier made it a business rule instead. Encoded in four tests, including "subscribing after the order does not backfill".
+  2. `order.created_at` is normalised to ISO 8601 UTC in the payload only (`src/lib/timestamp.ts`); the DB and `GET /api/orders` are untouched, PM-05 stays open.
+  3. One commit.
+  - Built: `WebhookEventRow`, `insertEvent`, tenant-scoped `getEventById` in `webhooksDal`; `src/services/orders-service.ts` (`createOrder` with injectable `now`, pure `buildOrderCreatedPayload`, reserved event type constants); POST route calls the service (the `randomUUID` import left the route). `ordersDal` unchanged.
+  - Tests: `test/orders-service.test.ts` (14: subscribed, business rule x4, atomicity x3 including rollback of the order when the event insert throws and "a failed call does not poison the next one", payload builder x3), `test/timestamp.test.ts` (4), `test/webhooks-dal.test.ts` +5, `test/orders.test.ts` +3. The JS-005 route tests were not modified and still pass, which is the proof that the POST response did not change.
+  - Golden gate: `npm run check` → `golden gate: PASSED - tsc clean, 210 tests, 0 fail, 0 cancelled, 0 skipped, 0 todo`.
+  - Live check on port 3055 against the seeded DB: subscribe `m_acme` 201; POST order `m_acme` 201 → one outbox row `order.created | pending | 0`; POST refund `m_bistro` (not subscribed) 201 → no row; invalid POST 400 → no row. Stored payload had `occurred_at` `...T18:35:35.099Z` and `order.created_at` `2026-09-18T18:35:35.000Z` while the API response showed the stored `2026-09-18 18:35:35`. Cleanup: subscription deleted through the API, the two probe orders and the probe event deleted by id; counts back to 81 orders, 0 events, 0 subscriptions.
+  - Note for JS-009: an event stays `pending` if its subscription is deleted afterwards; the dispatcher contract already handles it (`failed`, `no_subscription`).

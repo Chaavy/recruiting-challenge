@@ -92,3 +92,48 @@ describe('webhooksDal subscriptions', () => {
     assert.doesNotThrow(() => webhooksDal.createSubscription(sub('m_a', 'second')));
   });
 });
+
+describe('webhooksDal outbox events (JS-008)', () => {
+  const EVENT = {
+    id: 'evt_1',
+    merchant_id: 'm_a',
+    event_type: 'order.created',
+    payload: '{"event_id":"evt_1"}',
+    next_attempt_at: '2026-09-18T12:00:00.000Z',
+  };
+
+  test('insertEvent stores the row as pending with 0 attempts and returns it', () => {
+    const row = webhooksDal.insertEvent(EVENT);
+    assert.equal(row.id, 'evt_1');
+    assert.equal(row.merchant_id, 'm_a');
+    assert.equal(row.event_type, 'order.created');
+    assert.equal(row.payload, '{"event_id":"evt_1"}', 'payload is stored byte for byte');
+    assert.equal(row.status, 'pending');
+    assert.equal(row.attempts, 0);
+    assert.equal(row.next_attempt_at, '2026-09-18T12:00:00.000Z');
+    assert.equal(row.last_error, null);
+    assert.equal(row.delivered_at, null);
+    assert.ok(row.created_at.length > 0);
+  });
+
+  test('getEventById is scoped to the merchant', () => {
+    webhooksDal.insertEvent(EVENT);
+    assert.equal(webhooksDal.getEventById('m_a', 'evt_1')?.id, 'evt_1');
+    assert.equal(webhooksDal.getEventById('m_b', 'evt_1'), undefined);
+    assert.equal(webhooksDal.getEventById('m_a', 'missing'), undefined);
+  });
+
+  test('event ids are unique', () => {
+    webhooksDal.insertEvent(EVENT);
+    assert.throws(() => webhooksDal.insertEvent(EVENT));
+  });
+
+  test('an event for an unknown merchant is rejected by the foreign key', () => {
+    assert.throws(() => webhooksDal.insertEvent({ ...EVENT, merchant_id: 'm_unknown' }));
+  });
+
+  test('events do not need a subscription row to exist (the rule lives in the service)', () => {
+    assert.doesNotThrow(() => webhooksDal.insertEvent(EVENT));
+  });
+});
+

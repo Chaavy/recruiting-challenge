@@ -18,6 +18,11 @@
   `getById(merchantId, id)` never returns another merchant's row (JS-005).
   `webhooksDal` (JS-007) is the DAL of the Webhooks frontier, same rules:
   parameterized, every lookup scoped by merchant.
+- **`services/`** — (JS-008) operations that span more than one frontier.
+  `orders-service.ts` creates an order and its webhook event in one
+  transaction. It is the only module that knows both `ordersDal` and
+  `webhooksDal`; neither DAL knows the other. Services use the shared `db` only
+  to open a transaction, never to run queries.
 - **`routes/`** — Express routers, one file per resource. `webhooks.ts` (JS-007)
   manages the merchant's webhook subscription.
 - **`lib/`** — shared helpers with no DB access. `date-range.ts` turns a bare
@@ -28,6 +33,7 @@
   required `type` of `sale` or `refund` with no default, non-blank email);
   routes call it and answer a generic `invalid_body`. `webhook-url.ts` is the
   SSRF policy for merchant-supplied URLs (see "Webhooks frontier").
+  `timestamp.ts` normalises stored timestamps to ISO 8601 UTC for payloads.
 
 ## Data model
 
@@ -47,7 +53,8 @@ default needs a migration that rebuilds the table, so it is tracked as Post MVP.
 
 New frontier, depends on Merchant (tenant scope) and, from JS-008, on Orders
 (order creation is the event source). Slices: JS-007 subscriptions (shipped),
-JS-008 transactional outbox, JS-009 dispatcher + HMAC + retries, JS-010 docs.
+JS-008 transactional outbox (shipped), JS-009 dispatcher + HMAC + retries,
+JS-010 docs. Until JS-009 ships, events are persisted and not delivered.
 
 - **Tables** (`db.ts`): `webhook_subscriptions` (one row per merchant, UNIQUE
   `merchant_id`, `url`, `secret`) and `webhook_events` (the outbox: `payload`
@@ -68,6 +75,20 @@ JS-008 transactional outbox, JS-009 dispatcher + HMAC + retries, JS-010 docs.
   time (BACKLOG PM-16).
 - **`WEBHOOK_ALLOW_INSECURE_URLS=1`**: development only. Accepts loopback hosts
   over `http`/`https` for a local receiver. Everything else stays blocked.
+- **Transactional outbox** (JS-008): `POST /api/orders` → `ordersService.createOrder`
+  → one `db.transaction` that inserts the order and, if the merchant has a
+  subscription, one `order.created` row in `webhook_events` (`pending`,
+  `attempts 0`, `next_attempt_at = now`). Either both rows exist or neither.
+  Publishing after the insert in a separate step would lose the event on a
+  crash between the two; this is why the outbox is in the same transaction.
+  The transaction is synchronous (better-sqlite3), no async work inside.
+- **Business rule** (Javier): a merchant only receives events for orders created
+  while subscribed. No subscription, no event row; no backfill on subscribing.
+- **Payload**: built by the pure `buildOrderCreatedPayload`, stored as the exact
+  JSON string to send so the dispatcher never rebuilds it and the event stays
+  immutable. `event_id` = outbox row id = consumer idempotency key. Timestamps
+  leave as ISO 8601 UTC (`lib/timestamp.ts` normalises SQLite's format for the
+  payload only; the stored mix stays, BACKLOG PM-05).
 - **Races**: the route checks for an existing subscription, and the UNIQUE
   constraint is the backstop for two concurrent creations (mapped to 409).
 

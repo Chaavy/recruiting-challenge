@@ -185,4 +185,59 @@ describe('orders routes', () => {
       });
     }
   });
+  describe('POST /api/orders outbox (JS-008)', () => {
+    beforeEach(() => {
+      db.exec(`DELETE FROM webhook_events; DELETE FROM webhook_subscriptions;`);
+    });
+
+    function post(body: unknown, merchantId: string): Promise<Response> {
+      return fetch(`${base}/api/orders`, {
+        method: 'POST',
+        headers: { 'X-Merchant-Id': merchantId, 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+    }
+
+    function eventsOf(merchantId: string): Array<{ id: string; event_type: string; status: string; payload: string }> {
+      return db
+        .prepare(`SELECT id, event_type, status, payload FROM webhook_events WHERE merchant_id = ?`)
+        .all(merchantId) as Array<{ id: string; event_type: string; status: string; payload: string }>;
+    }
+
+    test('subscribed merchant: same 201 body as before, plus one pending event for that order', async () => {
+      db.prepare(
+        `INSERT INTO webhook_subscriptions (id, merchant_id, url, secret) VALUES ('sub_a', 'm_a', 'https://example.com/a', 's')`,
+      ).run();
+      const res = await post({ customer_email: 'bruno@example.com', total_amount: 1500, type: 'sale' }, 'm_a');
+      assert.equal(res.status, 201);
+      const body = (await res.json()) as { order: Record<string, unknown> };
+      assert.deepEqual(Object.keys(body).sort(), ['order'], 'the response does not expose the event');
+      assert.deepEqual(
+        Object.keys(body.order).sort(),
+        ['created_at', 'customer_email', 'id', 'merchant_id', 'status', 'total_amount', 'type'],
+      );
+
+      const events = eventsOf('m_a');
+      assert.equal(events.length, 1);
+      assert.equal(events[0]!.event_type, 'order.created');
+      assert.equal(events[0]!.status, 'pending');
+      const payload = JSON.parse(events[0]!.payload) as { order: { id: string } };
+      assert.equal(payload.order.id, body.order.id);
+    });
+
+    test('merchant without subscription: 201 and no event', async () => {
+      const res = await post({ customer_email: 'bruno@example.com', total_amount: 1500, type: 'sale' }, 'm_a');
+      assert.equal(res.status, 201);
+      assert.equal(eventsOf('m_a').length, 0);
+    });
+
+    test('an invalid body creates neither an order nor an event', async () => {
+      db.prepare(
+        `INSERT INTO webhook_subscriptions (id, merchant_id, url, secret) VALUES ('sub_a', 'm_a', 'https://example.com/a', 's')`,
+      ).run();
+      const res = await post({ customer_email: 'bruno@example.com', total_amount: 10.5, type: 'sale' }, 'm_a');
+      assert.equal(res.status, 400);
+      assert.equal(eventsOf('m_a').length, 0);
+    });
+  });
 });

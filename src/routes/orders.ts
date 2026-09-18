@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { ordersDal } from '../dal/orders-dal.js';
-import { randomUUID } from 'node:crypto';
+import { ordersService } from '../services/orders-service.js';
 import { validateCreateOrderBody } from '../lib/validate-order.js';
 
 export const ordersRouter = Router();
@@ -29,13 +29,7 @@ ordersRouter.post('/', (req, res) => {
     res.status(400).json({ error: 'invalid_body' });
     return;
   }
-  const order = ordersDal.create({
-    id: randomUUID(),
-    merchant_id: req.merchantId!,
-    customer_email: input.value.customer_email,
-    total_amount: input.value.total_amount,
-    type: input.value.type,
-    status: 'completed',
-  });
+  // The service writes the order and, for a subscribed merchant, its outbox event in one transaction.
+  const order = ordersService.createOrder(req.merchantId!, input.value);
   res.status(201).json({ order });
 });

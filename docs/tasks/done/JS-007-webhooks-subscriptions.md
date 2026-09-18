@@ -5,7 +5,7 @@
 | Status   | done                                   |
 | Type     | feature                                |
 | Priority | 4                                      |
-| Commits  | filled at close: short SHAs of the commits that ship this task (source for signoff.md) |
+| Commits  | `d940063` |
 
 ## Context
 

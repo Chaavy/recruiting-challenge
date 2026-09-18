@@ -62,7 +62,7 @@ Customers ranked by money kept. Optional query `limit` (default 5).
 
 ## Webhooks — subscription management
 
-A merchant registers one HTTPS URL to receive order events. **Status: subscription management only (JS-007).** Events are stored from JS-008 and delivered from JS-009; until those ship, nothing is sent to the URL.
+A merchant registers one HTTPS URL to receive order events. **Status: subscriptions (JS-007) and event storage (JS-008) are shipped. Delivery is not: events are persisted as `pending` and nothing is sent to the URL until JS-009.**
 
 All three endpoints act on the subscription of the merchant in `X-Merchant-Id`. There is at most one per merchant.
 
@@ -85,4 +85,40 @@ Body: `{ "url": "https://example.com/hooks/orders" }`.
 
 ### Development flag
 `WEBHOOK_ALLOW_INSECURE_URLS=1` (exactly `1`, read per request, default off) additionally accepts **loopback hosts, over `http` or `https`**, so a receiver can run on the same machine (`http://localhost:4000/hook`). Private ranges, link-local, credentials and `http` to public hosts stay rejected. Never set it in production.
+
+## Webhooks — events
+
+### When an event exists
+**A merchant only receives events for orders created while it has a subscription.** `POST /api/orders` writes the order and its event in one database transaction, so an order of a subscribed merchant can never exist without its event. An order created before subscribing, or after the subscription was deleted, has no event, and subscribing later does not backfill. `POST /api/orders` itself is unchanged: same request, same `201` body; the event is not exposed in the response.
+
+### Event types
+| `event_type` | Emitted | When |
+|---|---|---|
+| `order.created` | yes | every successful `POST /api/orders` of a subscribed merchant, for sales **and** refunds (check `order.type`) |
+| `order.refunded` | reserved, not emitted | no refund operation exists yet: a refund is an order row of type `refund`, not linked to a sale |
+| `order.status_changed` | reserved, not emitted | no status-change operation exists yet |
+
+### Payload (`version` 1)
+```json
+{
+  "event_id": "f18fbcfd-e0de-470d-be72-4147bb5fe71d",
+  "event_type": "order.created",
+  "version": 1,
+  "occurred_at": "2026-09-18T18:35:35.099Z",
+  "merchant_id": "m_acme",
+  "order": {
+    "id": "9936730a-6c1c-4d51-bb1f-d68792db1c58",
+    "customer_email": "ana@example.com",
+    "total_amount": 1500,
+    "type": "sale",
+    "status": "completed",
+    "created_at": "2026-09-18T18:35:35.000Z"
+  }
+}
+```
+
+- `event_id`: unique per event. Delivery will be at-least-once, so **use it as the idempotency key** and ignore an `event_id` you have already processed.
+- `total_amount`: integer cents, always positive. A refund is `type: "refund"`, never a negative amount.
+- `occurred_at`, `order.created_at`: ISO 8601 UTC. `order.created_at` is normalised for the payload; `GET /api/orders` still returns the stored format.
+- The payload is a snapshot taken when the order was created and is stored as the exact JSON string that will be sent; later changes to the order do not alter it.
 

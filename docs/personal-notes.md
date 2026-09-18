@@ -456,3 +456,6 @@ JS-007: Day: 18 Sep - Hour: 11:45 am.
 Golden gate is green -> After completing this task. Now Claude Code runs this gate before actually telling that has finished. Golden doing it job.
 reviewed db.ts with 2 new tables - Webhooks and webhooks_events both ok.
 Partial read of webhook-url.ts. reviwed webhooks-dal.ts completly good for me. Reviewed webhooks and looks good for me. server.ts checked and reviewed that middleware is also used for new route. Authorized to add new frontier at Claude.md. Checked documentation updates as well. Checked webhooks-url-test.ts I see diferent urls trying that are acepted and other that are not - looks good for me. Did not check all lines for webhooks-dal-test.ts and webhook.test.ts.
+during the commit phase also the golden gate was roon - Green.
+JS-008: Day: 18 Sep - Hour: 12:21 pm.
+I reviewed orders-service.ts - validated the order events types, the idempotency key event_id, snapshot of order that will be stored also looks good. OrdersService also validated - outbox and business rule .timestampt.ts - looks good the convertion. orders.ts validated, now it applies the outbox if apply using the Businessrule defined in the plan. webhooks-dal.ts new to methods insertEvent and getEventyById reviewed. api.md check, architecture.md check. I only checked the timestam.test.ts completly, other partial review. Golden gate green.
