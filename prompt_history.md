@@ -377,7 +377,7 @@ Approved
 - **How I caught it:** Javier answered the plan question from memory of his own commit history.
 - **What I did instead:** IDs renamed to `JS-nnn` in `CLAUDE.md`, `docs/tasks/README.md`, `TEMPLATE.md`, `INDEX.md`; earlier prompt-history text keeps `RC-` as written.
 
-### Example 3 — recorded by Claude, session 2 [to confirm by Javier]
+### Example 3 — recorded by Claude, session 2
 
 - **The prompt:** Session 2, prompt 3 (tasks final definition), plan question 4.
 - **What Claude returned:** recommended including ESLint (two new devDependencies, `eslint` and `typescript-eslint`) in the golden-gate task JS-006, and treating the plan reply as the dependency approval.
@@ -385,7 +385,7 @@ Approved
 - **How I caught it:** Javier rejected it in prompt 4: "Eslint add new dependencies which means possible new vulnerabilities could be found - due to the time i have, please move it to post mvp".
 - **What I did instead:** JS-006 contract written with `tsc --noEmit` + `npm test` only, ESLint and the SQL-injection lint gate listed as Post MVP in JS-005/JS-006; flagged that the ESLint bullet in `CLAUDE.md` now needs Javier's own edit.
 
-### Example 4 — recorded by Claude, session 4 [to confirm by Javier]
+### Example 4 — recorded by Claude, session 4
 
 - **The prompt:** Session 4, prompt 1 ("next task", JS-005 plan) and the JS-005 contract Claude wrote in Session 2; rejected in Session 4, prompt 5.
 - **What Claude returned:** a validator for `POST /api/orders` where a missing `type` defaults to `sale` (`(type as OrderType | undefined) ?? 'sale'`), with the same rule written into the contract's Objective, Edge cases and Acceptance criteria, and a test named "minimal valid body defaults type to sale".
