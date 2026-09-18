@@ -44,9 +44,17 @@ Work is organised in tasks under `docs/tasks/` (one contract file per task,
 priority-ordered index). Claude Code is configured through `CLAUDE.md` and
 `.claude/settings.json`: every session starts with a plan that the owner
 approves, changes under `src/` ship with unit tests, and the session is
-recorded in `prompt_history.md` before the owner commits. The golden gate
-(lint with zero warnings + all tests green, enforced by a pre-commit hook) is
-designed in `CLAUDE.md` and implemented in task JS-006.
+recorded in `prompt_history.md` before the owner commits.
+
+The golden gate is designed in `CLAUDE.md` and implemented in JS-006:
+`npm run check` runs `scripts/golden-gate.sh` (`tsc --noEmit`, then the test
+suite, red on any failed, cancelled, skipped or todo test, and red if the
+summary cannot be read). The versioned hook `.githooks/pre-commit` runs it on
+every commit; `npm install` activates the hook through the `prepare` script
+(`scripts/install-hooks.sh` sets `core.hooksPath`, a per-clone setting). Known
+limits, tracked in `docs/tasks/BACKLOG.md`: `--no-verify` bypasses the hook and
+there is no server-side CI (PM-02), ESLint is not in the gate (PM-01), `test/`
+is not type-checked because `tsconfig.json` only includes `src/` (PM-28).
 
 ## Open items
 

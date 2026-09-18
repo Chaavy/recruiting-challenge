@@ -21,10 +21,10 @@ We care less about *whether* you finish than *how* you decide what to do. Read [
 
 ## Setup
 
-Requirements: **Node 20+**.
+Requirements: **Node 22+** (raised from 20 in JS-006: Node 20 is end-of-life, and the test runner only expands the `test/**/*.test.ts` pattern itself from Node 21 on).
 
 ```sh
-npm install
+npm install      # also installs the git pre-commit hook, see "Golden gate" below
 npm run dev
 ```
 
@@ -37,8 +37,20 @@ If port 3000 is taken: `PORT=3055 npm run dev`.
 The database is SQLite, kept in `data/dashboard.db`. The first run seeds two merchants (`m_acme`, `m_bistro`) and ~80 orders. Delete the file to reseed.
 
 ```sh
-npm test     # run the (intentionally thin) test suite
+npm test         # run the test suite against an in-memory database
+npm run check    # golden gate: type-check + tests, see below
 ```
+
+### Golden gate
+
+`npm run check` (`scripts/golden-gate.sh`) is the definition of done for every commit:
+
+1. `tsc --noEmit` — zero type errors in `src/`.
+2. `npm test` — every test passed: 0 failed, 0 cancelled, **0 skipped, 0 todo**. `node --test` exits 0 when tests are skipped, so the script reads the summary lines, and it fails closed: if a summary line is missing the gate is red.
+
+The gate runs on every `git commit` through the versioned hook `.githooks/pre-commit`. `npm install` activates it (the `prepare` script runs `git config core.hooksPath .githooks`). That setting is per clone: after a fresh clone run `npm install` or `npm run prepare` once, and check with `git config core.hooksPath`.
+
+The only bypass is `git commit --no-verify`. It must not be used for task commits, and any use has to be declared in `signoff.md`. There is no server-side CI yet (Post MVP, `docs/tasks/BACKLOG.md` PM-02), so the hook is the only enforcement. ESLint is not part of the gate yet (PM-01), and test files are not type-checked (PM-28).
 
 To switch between the two seeded merchants in the dashboard, use the selector at the top of the page. Behind the scenes the client sends an `X-Merchant-Id` header on every API request — see `src/auth.ts`.
 

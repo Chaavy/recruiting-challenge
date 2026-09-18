@@ -2,7 +2,7 @@
 
 | Field    | Value                                  |
 |----------|----------------------------------------|
-| Status   | pending                                |
+| Status   | done                                   |
 | Type     | bugfix                                 |
 | Priority | 3                                      |
 | Commits  | filled at close: short SHAs of the commits that ship this task (source for signoff.md) |
@@ -90,3 +90,30 @@ Add a versioned hook directory `.githooks/` with a `pre-commit` script that runs
 ## Session log
 
 - 2026-09-18 — Contract created in the JS-003 tasks-definition session. Javier's decisions: order moved from first to third; hook runs `tsc` + `npm test`; glob quoted; ESLint and GitHub Actions to Post MVP. No work started.
+- 2026-09-18 — Execution session (Claude Code session `c9c48822-4fb8-46ba-a62e-2cd24be43f40`). Plan approved with three decisions by Javier:
+  1. **Node version.** Claude found that quoting the glob makes Node expand `test/**/*.test.ts` itself, which Node only does from v21; on Node 20 the unquoted form already could not find the tests (no subfolder → `sh` passes the literal). Not verified on a real Node 20, taken from the Node docs. Javier chose option (a): "Even is a critical decision to change the version of Node, I would totally agree with option (a). [...] Node 20 is end-of-life and we are build our golden gate." `engines` raised to `>=22` in `package.json` and the lockfile root entry, README requirement updated.
+  2. **`CLAUDE.md`.** Javier approved the ESLint wording changes: `npm run check` documented, `npm run lint` marked Post MVP (PM-01), workflow step 4 and the golden gate section point at `npm run check`, the ESLint bullet replaced by "`tsc --noEmit`: zero errors".
+  3. **Tests not type-checked.** Kept out ("for now we are only including src/"), backlog row PM-28.
+  - Built: `scripts/golden-gate.sh` (tsc, then tests, summary parsed with `awk` on whitespace fields so it does not depend on the `ℹ` marker or the locale, fails closed), `.githooks/pre-commit`, `scripts/install-hooks.sh` (no `|| true`; skips outside a git work tree), `package.json` scripts `check` and `prepare`, quoted glob. No dependency added. No `src/` change, so no new unit test.
+  - Claude did **not** run `npm run prepare` / `git config`: activating the hook writes Javier's git config, left to him. `git config core.hooksPath` was still `unset` at close.
+  - Probes, each with a temporary file that was deleted afterwards (raw tail of the output):
+    - skipped test → `golden gate: FAILED - 1 test(s) reported as 'skipped'; the gate requires 0`, exit 1
+    - todo test → `golden gate: FAILED - 1 test(s) reported as 'todo'; the gate requires 0`, exit 1
+    - failing test → `golden gate: FAILED - npm test exited with status 1`, exit 1
+    - type error in `src/__gate_probe.ts` → `error TS2322: Type 'string' is not assignable to type 'number'.` / `golden gate: FAILED - type errors (tsc --noEmit)`, exit 1
+    - reporter output without summary lines (fake `npm` on `PATH` exiting 0) → `golden gate: FAILED - summary line 'tests' not found in the test output (failing closed)`, exit 1. The first run of this probe showed exit 0 because the command was piped through `tail`; re-run without the pipe to capture the real code.
+    - `sh .githooks/pre-commit` on the clean tree → exit 0; with a failing test → exit 1 plus the three `pre-commit:` lines about `--no-verify`.
+  - Regression over JS-004 + JS-005 (final run after all edits), `npm run check`:
+    ```
+    ℹ tests 96
+    ℹ pass 96
+    ℹ fail 0
+    ℹ cancelled 0
+    ℹ skipped 0
+    ℹ todo 0
+    golden gate: PASSED - tsc clean, 96 tests, 0 fail, 0 cancelled, 0 skipped, 0 todo
+    ```
+  - Still to do by Javier: `npm run prepare` once, then one real `git commit` with a deliberately broken test to see the rejection.
+  - Noticed, not fixed: `CLAUDE.md` line "Node >= 20 (local: 24)" is now stale (not among the lines Javier approved; PM-29). Backlog rows added: PM-28, PM-29.
+  - Follow-up in the same session, before the commit: Javier authorised the PM-29 edit ("we have already updated the node at the repo level, update it also in CLAUDE.md I give you the authorization to do it"). `CLAUDE.md` now says "Node >= 22 (local: 24; raised from 20 in JS-006)"; PM-29 marked resolved; the pending JS-009 contract's "Node >= 20" note updated to ">= 22". `npm run check` re-run: PASSED, 96 tests.
+  - Hook activation, same session, before the commit: earlier entries in this log say Claude did not run `npm run prepare` and that `core.hooksPath` was `unset` at close. That was true when written. Javier then sent the prompt `npm run prepare` and Claude ran it at his explicit request: output `install-hooks: core.hooksPath = .githooks`, `git config core.hooksPath` = `.githooks`, hook file mode `-rwxr-xr-x`. Javier's decision: "in this commit I want to activate it", so the JS-006 commit is the first commit checked by the gate. Still Javier's to do: optionally watch one rejected commit with a deliberately broken test.

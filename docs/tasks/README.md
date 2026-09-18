@@ -48,7 +48,7 @@ Copy `TEMPLATE.md` into `pending/JS-nnn-<slug>.md`, fill every section (write `T
 
 1. In a new Claude Code session, ask for the next task (or name one: "work on JS-004").
 2. Claude reads the task file and answers with a plan. Nothing is modified until Javier approves.
-3. Claude executes, writes the tests, runs `npm test` and lint, and reports the raw output.
+3. Claude executes, writes the tests, runs `npm run check` (golden gate: `tsc --noEmit` + tests), and reports the raw output.
 4. Javier reviews the diff and the test output line by line.
 
 ## Closing a task (step 5 of the session workflow)

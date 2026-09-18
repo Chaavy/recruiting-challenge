@@ -256,6 +256,54 @@ Lets do something, the great advantage we have with this task management system 
 
 ---
 
+### Session 5 — JS-006 Golden gate: pre-commit hook and regression — 2026-09-18
+
+Session id: `c9c48822-4fb8-46ba-a62e-2cd24be43f40` (same Claude Code session, continued after Javier committed the backlog as `45954f5`, "JS-backlog-tasks").
+
+**Prompt 1 (verbatim):**
+```text
+next task
+```
+**What the model returned:** took JS-006; read-only checks (tree clean, `core.hooksPath` unset, no hooks, Node 24.14, unquoted test glob, `engines` `>=20`). Plan: `scripts/golden-gate.sh` (tsc, then tests, summary parsed with `awk`, fails closed), `.githooks/pre-commit`, `scripts/install-hooks.sh` behind an npm `prepare` script, quoted glob, probes with temporary files, docs. It said it would not run `npm run prepare` itself because that writes Javier's git config. Three decisions asked: (1) Node: quoting the glob means Node expands it, which only exists from v21, and on Node 20 the tests already cannot be found; options (a) `engines >=22` + README, (b) quote and backlog it, (c) flat unquoted `test/*.test.ts`; the model said it had not verified this on a real Node 20. (2) exact replacement text for four stale ESLint lines in `CLAUDE.md`. (3) tests are not type-checked; recommended keeping it out with a backlog row.
+**Accepted / rejected / refined:** see prompt 2.
+
+**Prompt 2 (verbatim):**
+```text
+1. Even is a critical decision to change the version of Node, I would totally agree with option (a). As you mention, Node 20 is end-of-life and we are build our golden gate. This step is totally worth it from my point of view. 
+
+2. I understand the changes you are saying. I approve you to to the changes required in CLAUDE.md to specify that ESLINT in currently in post MVP so we will not checking it until then.
+
+3. Yes for now we are only including src/. Kept it out and add the backlog row.
+
+Approved.
+```
+**What the model returned:** built the three scripts and the `package.json` changes (`check`, `prepare`, quoted glob, `engines >=22`, lockfile root entry). Seven probes with temporary files, all deleted afterwards: skipped, todo, failing test, type error in `src/`, reporter output without summary lines (fails closed), hook green, hook red with the `--no-verify` message. One probe first reported exit 0 because the command was piped through `tail`; the model noticed, re-ran it without the pipe and got exit 1. Final `npm run check`: 96 tests, 96 pass, 0 fail/cancelled/skipped/todo, PASSED. Docs: README "Golden gate" section and Node 22 requirement, `docs/architecture.md`, `docs/tasks/README.md`, `TEMPLATE.md`, the approved `CLAUDE.md` lines. Backlog: PM-28 (tests not type-checked), PM-29 (`CLAUDE.md` still says "Node >= 20", not among the approved lines, left for Javier). Task closed and moved to `done/`. `core.hooksPath` left unset for Javier to activate.
+**Accepted / rejected / refined:** Javier chose option (a) for Node, approved the `CLAUDE.md` ESLint wording, kept test type-checking out. Pending: his line-by-line review, `npm run prepare`, and one real rejected commit.
+
+**Prompt 3 (verbatim):**
+```text
+For the PM-29: CLAUDE.md still says "Node >= 20". That line was not among the ones you approved, so I left it for you. Please also update the version in here, we have already updated the node at the repo level, update it also in CLAUDE.md I give you the authorization to do it.
+```
+(IDE selection at the time: `CLAUDE.md` line 17, `Node`.)
+**What the model returned:** changed the `CLAUDE.md` line to "Node >= 22 (local: 24; raised from 20 in JS-006)", searched for other "Node 20" mentions (one in the pending JS-009 contract, updated; one in the lockfile belongs to a dependency, left), marked PM-29 `resolved in JS-006` and added that state to the backlog legend, logged it in the JS-006 task file, re-ran `npm run check` (PASSED, 96 tests).
+**Accepted / rejected / refined:** Javier explicitly authorised the protected-file edit the model had declined to make on its own.
+
+**Prompt 4 (verbatim):**
+```text
+npm run prepare
+```
+**What the model returned:** ran the command because Javier asked for it explicitly (it had declined to run it on its own, since it writes the clone's git config). Output: `install-hooks: core.hooksPath = .githooks`; confirmed with `git config core.hooksPath` and the executable bit on `.githooks/pre-commit`. Gave three shell lines to watch a rejected commit with a temporary skipped test, and pointed out that the task log and this entry still said the hook was left unset; offered to correct the record now or at the next task.
+**Accepted / rejected / refined:** see prompt 5.
+
+**Prompt 5 (verbatim):**
+```text
+add it now, in this commit I want to activate it.
+```
+**What the model returned:** appended the activation to the JS-006 session log and these two prompts to this entry, without rewriting the earlier lines that said the hook was unset; re-ran `npm run check`.
+**Accepted / rejected / refined:** Javier decided the hook is activated within the JS-006 commit, so that commit is the first one the gate checks.
+
+---
+
 ## What Claude (or your AI tool) got wrong
 
 > **Mandatory.** Three or more specific examples of AI output you rejected, corrected, or had to re-prompt. If you cannot fill this section, that itself is the signal — either nothing was reviewed, or the review left no trace. Either way, the score reflects it.

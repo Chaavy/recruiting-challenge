@@ -44,7 +44,7 @@ What Javier will see when the task is done: endpoints, UI behaviour, files, comm
 ## Validation
 
 - Tests to add (file names and what each asserts):
-- Commands to run: `npm test`, lint
+- Commands to run: `npm run check` (golden gate: `tsc --noEmit` + tests)
 - What to click or call in the dashboard / API to see it working:
 
 ## Confidence and falsification

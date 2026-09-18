@@ -1,0 +1,16 @@
+#!/bin/sh
+# Pre-commit hook (JS-006): no commit unless the golden gate is green.
+# Installed by `npm install` / `npm run prepare` (git config core.hooksPath .githooks).
+# Runs the whole suite on purpose, not only staged files: correctness over speed.
+
+npm run --silent check
+status=$?
+
+if [ "$status" -ne 0 ]; then
+  echo ""
+  echo "pre-commit: commit rejected, the golden gate is red."
+  echo "pre-commit: the only bypass is 'git commit --no-verify'. Do not use it for task commits;"
+  echo "pre-commit: if it is ever used, it must be declared in signoff.md."
+fi
+
+exit "$status"

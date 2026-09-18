@@ -39,7 +39,7 @@ Add `src/jobs/webhook-dispatcher.ts` exposing `createDispatcher(deps)` with `run
 
 ## Restrictions
 
-- No new dependencies. `fetch`, `AbortController`, `node:crypto` only (Node >= 20).
+- No new dependencies. `fetch`, `AbortController`, `node:crypto` only (Node >= 22, see JS-006).
 - Tests must not sleep or use real timers: inject `now` and `fetch`; call `runOnce()` directly; never `start()` in tests.
 - Delivery is sequential (`for … of` with `await`), one event at a time; batch size default 50.
 - `last_error` stores a short generic description (`http_500`, `timeout`, `network_error`, `redirect`, `no_subscription`), never a response body or stack trace.
