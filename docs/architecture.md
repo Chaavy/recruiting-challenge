@@ -22,6 +22,16 @@ Two tables: `merchants`, `orders`. See `db.ts` for the canonical DDL.
 `orders.type` is one of `'sale' | 'refund'`. A refund row records that a sale
 was reversed; it does not by itself reverse the sale row.
 
+## Development workflow
+
+Work is organised in tasks under `docs/tasks/` (one contract file per task,
+priority-ordered index). Claude Code is configured through `CLAUDE.md` and
+`.claude/settings.json`: every session starts with a plan that the owner
+approves, changes under `src/` ship with unit tests, and the session is
+recorded in `prompt_history.md` before the owner commits. The golden gate
+(lint with zero warnings + all tests green, enforced by a pre-commit hook) is
+designed in `CLAUDE.md` and implemented in task JS-004.
+
 ## Open items
 
 - ~~Wire `dashboard.tsx` once we pick a frontend framework~~ — went with static HTML+fetch instead. Doc stale.

@@ -26,10 +26,10 @@ And this is the context map that shows the dependencies of each. Context Map:
 
 After reviewing project and code base - I identified the following tasks and I have ordered them by priority based on my personal judment. In order to develop each feature/fix, I propose the following branch convention strategy:
 
-- MVPs - Every single development must belong to an MVP
-- Release - Each MVP is divided into realeases branches
-- Branch (bugfix/feature) - Each release is conformed by multiple features - bug fixes
-    - Base branches: main - prd - uat - dev - release - feature/bugfix (RC - RecruitingChallenge)
+- (out of scope, see Post MVP 8) MVPs - Every single development must belong to an MVP
+- (out of scope, see Post MVP 8) Release - Each MVP is divided into realeases branches
+- (out of scope, see Post MVP 8) Branch (bugfix/feature) - Each release is conformed by multiple features - bug fixes
+    - (out of scope, see Post MVP 8) Base branches: main - prd - uat - dev - release - feature/bugfix (RC - RecruitingChallenge)
 
 MVP1 - This is the MVP that will be completed by the end of this challenge
 
@@ -37,14 +37,14 @@ release/1.0.0
 1. Personal-notes file (this file)
 Objective: General Project overview - development convention - tasks discovery
 Notes: NO AI used yet, I read every single line of the codebase, identified project frontiers, gaps, vulnerbailities and improvements. ordered these items by criticity.
-Branch: feature/RC-001-personal-notes-file
+(out of scope, see Post MVP 8) Branch: feature/RC-001-personal-notes-file
 
 2. Claude code integration
 Objective: Integrate claude into this project
 Notes: Specify repository and project rules - how to run this project and how to test it - what Claude code can not do by itself, create structure of tasks (pending and done) and its specification (this will be my contract for each task - we will only create 4 tasks, 3 of them to fix something and 1 to develop a feature).
 Design golden gate rules for CI, generate hook to prevent commit if golden gate is not met (this will have its own task - Taks number 1).
 What is not included: Project skills, project custom commands, session history, memory git-based.
-Branch: feature/RC-002-claudecode-integration
+(out of scope, see Post MVP 8) Branch: feature/RC-002-claudecode-integration
 
 Claude Code Notes: 
 For each sesssion with claude code the workflow must be like this:
@@ -62,7 +62,7 @@ Notes: Claude code will not modify any files, this is only a read-only and discu
 4. Project tasks final definition
 Objective: At this point, I have already identified the items to be fixed, I have already had a session with claude discussing these items, based on this: I will confirm what and how we will develop each one (Each of them defined on its own task).
 Notes: I will modify this personal notes by me if needed. On step 2, we have created Claude code workflow for task development - I will ask Claude code to create these tasks once are confirmed and reviewed by me.
-Branch: feature/RC-003-tasks-final-definition
+(out of scope, see Post MVP 8) Branch: feature/RC-003-tasks-final-definition
 
 release/2.0.0
 1. Problem 1 - CI rules - golden gate
@@ -70,7 +70,7 @@ What is wrong: Before any commit, I want to make sure that the changes that Clau
 What I propose: A golden gate in CI, before any commit we must run: ESLint - no warning allowed (Configuration needed), then npm run test. In which all test must be with status: green passed. Not Skipped or failed allowed. If one of this fail we are not allowed to do the commit. A hook will prevent us for over passing it.
 Confidence: 9 - I am not sure if I can block human commit with this hook - I am confident that Claude can be blocked.
 How to know if I am wrong: TBD
-Branch: bugfix/RC-004-CI-golden-gate
+(out of scope, see Post MVP 8) Branch: bugfix/RC-004-CI-golden-gate
 
 2. Problem 2 - Security
 What is wrong: While reading codebase I identified the following vulnerabilities (Note each vulnerability will be addressed in its own commit - not a single giant commit):
@@ -80,20 +80,20 @@ What I propose:
 - Custom project errors: There are multiple cases in which we are giving to the user a detailed error - this will help an attacker to easily understand what is happening/missing. Errors must be more generic.
 Confidence: 8 - For sure SQL injection is one critical problem (confidence 10), others 2 maybe can be for post MVP - out of scope
 How to know if I am wrong: TBD
-Branch: bugfix/RC-005-critical-security-vulnerabilities
+(out of scope, see Post MVP 8) Branch: bugfix/RC-005-critical-security-vulnerabilities
 
 3. Problem 3 - revenue frontier fix
 What is wrong: TBD
 What I propose: TBD
 Confidence: 7 - Direct dependency between frontiers - No scalable code. Orders is a critical process in this system needs to be addressed as soon as possible but after CI rules and Security fixes.
 How to know if I am wrong: TBD
-Branch: bugfix/RC-006-fix-revenue-frontier
+(out of scope, see Post MVP 8) Branch: bugfix/RC-006-fix-revenue-frontier
 
 release/3.0.0
 1. Feature B — Order-event webhooks
 Context: Add a way for merchants to register an HTTPS URL and receive a POST notification when an order is created, refunded, or its status changes. The candidate decides the event payload, the delivery guarantees, the retry policy, the auth between us and the merchant, and how a merchant manages their subscriptions.
 Why this one: This feature is the one that I have more experience working with. I feel more confident with real-world scenario.
-Branch: TBD
+(out of scope, see Post MVP 8) Branch: TBD
 
 Post MVP - This will not be part of the challenge - out of scope
 
@@ -104,3 +104,4 @@ Post MVP - This will not be part of the challenge - out of scope
 5. Escale Frontend - decide technology and framework - create project and connect to backend
 6. Escalability - how to prevent application crashes if user interaction grows x10, x100, x1000
 7. Reliability - how do we keep our system running even if a disaster occurs - disaster recovery
+8. MVP / release / branch strategy - designed above (MVPs, release branches, feature/bugfix branches, base branches) but not applied: with ~2.5 hours left all work goes to one branch (feature/javier-sierra-challenge) with one or more commits per task, task IDs JS-nnn in the commit message.
