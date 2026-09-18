@@ -6,7 +6,7 @@
 
 ## Authorship declaration
 
-I wrote this sign-off entirely without AI assistance.
+I wrote this file entirely by my self and the decisions were taken and confirmed by me. I used AI for this limited porpuse: Remember my real decisions made during the sessions.
 
 ---
 

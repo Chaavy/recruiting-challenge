@@ -4,6 +4,8 @@
 >
 > This is the one artifact where AI content is *expected* — it's the conversation transcript itself. **Do not curate, summarize, or rewrite it.** A polished prompt history with no false starts is treated as evidence of curation, which lowers your AI-discipline score.
 
+AI wrote this file completely
+
 How this file is maintained: Claude Code appends one entry per session at step 5 of the session workflow (rule in `CLAUDE.md`, "Prompt history rule"). Prompts are copied verbatim, what the model returned is summarised factually, and the accepted / rejected / refined line records only the decisions Javier took in that session. Earlier entries are never edited. Full raw transcripts of every session are kept by Claude Code at `~/.claude/projects/-Users-js-Documents-T1-exercise-recruiting-challenge/<session-id>.jsonl`.
 
 ## Tool(s) used
@@ -356,6 +358,8 @@ Approved
 ---
 
 ## What Claude (or your AI tool) got wrong
+
+Claude wrote this examples with a placeholder [confirm by javier] - I reviewed each point and confirmed (removed this placeholder)
 
 > **Mandatory.** Three or more specific examples of AI output you rejected, corrected, or had to re-prompt. If you cannot fill this section, that itself is the signal — either nothing was reviewed, or the review left no trace. Either way, the score reflects it.
 >

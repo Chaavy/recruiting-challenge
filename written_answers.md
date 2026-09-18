@@ -5,7 +5,7 @@
 
 ## Authorship declaration
 
-I wrote these answers entirely without AI assistance.
+I wrote this file entirely by my self I used AI for this limited porpuse: Remember my details about my real scenarios
 
 > If English is not your first language, write in English anyway and don't worry about polish. We score substance and specificity, not grammar. Honest rough writing beats AI-laundered prose.
 
