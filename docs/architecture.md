@@ -30,7 +30,7 @@ priority-ordered index). Claude Code is configured through `CLAUDE.md` and
 approves, changes under `src/` ship with unit tests, and the session is
 recorded in `prompt_history.md` before the owner commits. The golden gate
 (lint with zero warnings + all tests green, enforced by a pre-commit hook) is
-designed in `CLAUDE.md` and implemented in task JS-004.
+designed in `CLAUDE.md` and implemented in task JS-006.
 
 ## Open items
 

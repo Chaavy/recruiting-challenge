@@ -71,6 +71,7 @@ What I propose: A golden gate in CI, before any commit we must run: ESLint - no 
 Confidence: 9 - I am not sure if I can block human commit with this hook - I am confident that Claude can be blocked.
 How to know if I am wrong: TBD
 (out of scope, see Post MVP 8) Branch: bugfix/RC-004-CI-golden-gate
+Notes after discussion: The hook to prevent human commit is confirmed. We will do the pre-commit that runs the tsc and npm test as well as the test glob in package.json. Also consider  Eslint configuration. The other: GitHub Actions is out of scope and must go to Post MVP section.
 
 2. Problem 2 - Security
 What is wrong: While reading codebase I identified the following vulnerabilities (Note each vulnerability will be addressed in its own commit - not a single giant commit):
@@ -81,6 +82,9 @@ What I propose:
 Confidence: 8 - For sure SQL injection is one critical problem (confidence 10), others 2 maybe can be for post MVP - out of scope
 How to know if I am wrong: TBD
 (out of scope, see Post MVP 8) Branch: bugfix/RC-005-critical-security-vulnerabilities
+Notes after discussion: IA was correct, there is not any SQL injection I was confused - expecting to see :param as JPA.
+What the IA found I totally agree with:
+Fix the tenant isolation fix plus POST validation. Keep the SQL injection gate anyway. Out of scope Dependencies and Custom project errors go to post MVP section.
 
 3. Problem 3 - revenue frontier fix
 What is wrong: TBD
@@ -88,12 +92,20 @@ What I propose: TBD
 Confidence: 7 - Direct dependency between frontiers - No scalable code. Orders is a critical process in this system needs to be addressed as soon as possible but after CI rules and Security fixes.
 How to know if I am wrong: TBD
 (out of scope, see Post MVP 8) Branch: bugfix/RC-006-fix-revenue-frontier
+Notes after duscussion: I totally mismatch what I wrote, I meant that the metrics frontier was the wrong one - as I declared on the context Map. We must implement this fix - it was the original.
+AI also spotted a bug that was not in my radar: The revenue calculation is wrong. This is a real P0, even if I dedicate more time to this fix I will accept the risk. We must fix it as it is a production app. What is also spotted but i put it as out of scope for this task, these two findings: Mixed timestamp formats in one columnn and Float money in the response - go to Post MVP section.
 
 release/3.0.0
 1. Feature B — Order-event webhooks
 Context: Add a way for merchants to register an HTTPS URL and receive a POST notification when an order is created, refunded, or its status changes. The candidate decides the event payload, the delivery guarantees, the retry policy, the auth between us and the merchant, and how a merchant manages their subscriptions.
 Why this one: This feature is the one that I have more experience working with. I feel more confident with real-world scenario.
 (out of scope, see Post MVP 8) Branch: TBD
+Notes after discussion: Currently No events exist also confirmed by IA. I accept the outbox table (that will also help with auditlog in the feature), I accept the suggestions related to Payload and table. I do also accept Retry and dispatcher suggestions. For Auth I understand that the standar is HMAC-SHA256 so we will go for it instead of public and private key. And I totally agree that we will create a security risk for SSRF - I do also accept to prevent it as the Architect proposes. And we will go as it suggest for Subscription endpoints.
+
+New section because we are running out of time: Order and scope
+This is the what AI suggested: 
+On budget: your notes say about 2.5 hours remain. My rough estimate is 30 to 40 minutes for revenue, 30 for security, 45 to 60 for CI, and 90 or more for webhooks. You will exceed the six hours. The README asks for that to be written down in the decision log, not hidden. Slice webhooks so that each step is a coherent stop: schema and subscription endpoints, then outbox insert, then dispatcher with signing, then docs. If time runs out after the outbox, "events are persisted, dispatch pending" is still a defensible deliverable.
+My decision: Go a head with what is specified in problem 1, problem 2 and problem 3 (Notes after discussion) - for the webhook we will also as it is suggested with small delirables so if we run out of time, we can document and deliver with the proper comments.
 
 Post MVP - This will not be part of the challenge - out of scope
 

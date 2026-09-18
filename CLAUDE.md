@@ -20,7 +20,7 @@ Task state (auto-loaded every session):
 - `npm start` — server without reload. `npm run seed` — seeds 2 merchants and 80 orders if the DB is empty.
 - `npm test` — runs `test/**/*.test.ts` against an in-memory DB (`DB_PATH=:memory:`).
 - `npm run build` — `tsc` to `dist/`.
-- `npm run lint` — does not exist yet. It is created in task JS-004 (golden gate).
+- `npm run lint` — does not exist yet. It is created in task JS-006 (golden gate).
 - DB file: `data/dashboard.db` (gitignored). The server seeds it on first start. Deleting it reseeds; ask before deleting.
 
 ## Code rules
@@ -44,7 +44,7 @@ Task state (auto-loaded every session):
 1. **Prompt** (Javier): Context, Objective, Restrictions, Edge cases (if any), Expected result.
 2. **Plan** (Claude proposes, Javier validates): the first response to any prompt is a plan. Claude modifies no file until Javier writes an explicit approval. Questions are raised in this phase, not during execution.
 3. **Execution** (Claude): only what the approved plan says.
-4. **Tests** (Claude codes and runs; Javier reviews line by line): unit tests for every `src/` change, `npm test`, lint (once JS-004 exists). The golden gate below must be green.
+4. **Tests** (Claude codes and runs; Javier reviews line by line): unit tests for every `src/` change, `npm test`, lint (once JS-006 exists). The golden gate below must be green.
 5. **Update** (Claude): task status and index, project docs, `prompt_history.md`. See "Closing a task".
 6. **Commit and push** (Javier).
 
@@ -86,7 +86,7 @@ Entry format:
 
 ## Golden gate (definition of done)
 
-Designed in JS-002, enforced by ESLint config + pre-commit hook in JS-004. Until then Claude checks it by hand and reports the output.
+Designed in JS-002, enforced by ESLint config + pre-commit hook in JS-006. Until then Claude checks it by hand and reports the output.
 
 - ESLint: zero errors and zero warnings.
 - `npm test`: every test passed. 0 failed, 0 skipped, 0 todo, 0 cancelled.
