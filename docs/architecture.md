@@ -14,12 +14,16 @@
   JS-004 every route follows this, including `metrics.ts`, which used to open
   its own read-only connection. Money aggregates (metrics, revenue) share one
   SQL fragment in the DAL: a completed sale counts positive, a completed refund
-  counts negative, anything else counts 0.
+  counts negative, anything else counts 0. Lookups by id are tenant-scoped:
+  `getById(merchantId, id)` never returns another merchant's row (JS-005).
 - **`routes/`** — Express routers, one file per resource.
 - **`lib/`** — shared helpers with no DB access. `date-range.ts` turns a bare
   `YYYY-MM-DD` upper bound into the next day's midnight so `created_at < ?`
   includes the whole requested day (used by revenue; `listByMerchant` has the
-  same boundary and does not use it yet).
+  same boundary and does not use it yet). `validate-order.ts` is the single
+  definition of a valid `POST /api/orders` body (positive integer cents,
+  required `type` of `sale` or `refund` with no default, non-blank email);
+  routes call it and answer a generic `invalid_body`.
 
 ## Data model
 
@@ -27,6 +31,12 @@ Two tables: `merchants`, `orders`. See `db.ts` for the canonical DDL.
 
 `orders.type` is one of `'sale' | 'refund'`. A refund row records that a sale
 was reversed; it does not by itself reverse the sale row.
+
+Known gap: the column is still declared `type TEXT NOT NULL DEFAULT 'sale'` in
+`db.ts`. The API never relies on that default (the validator requires `type`
+and `ordersDal.create` requires it at compile time), but an insert written in
+raw SQL that skips the column would silently become a `sale`. Removing the
+default needs a migration that rebuilds the table, so it is tracked as Post MVP.
 
 ## Development workflow
 

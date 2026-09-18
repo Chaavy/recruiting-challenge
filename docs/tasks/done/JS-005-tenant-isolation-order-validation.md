@@ -2,10 +2,10 @@
 
 | Field    | Value                                  |
 |----------|----------------------------------------|
-| Status   | in-progress                            |
+| Status   | done                                   |
 | Type     | bugfix                                 |
 | Priority | 2                                      |
-| Commits  | filled at close: short SHAs of the commits that ship this task (source for signoff.md) |
+| Commits  | A `e9f003b` (tenant isolation) · B: fill with the short SHA once Javier commits step B (input validation) |
 
 ## Context
 
@@ -18,7 +18,7 @@ Frontiers: Merchant and Orders. The Merchant boundary is enforced only by the `X
 
 ## Objective (what I propose)
 
-Commit A: `getById` takes `(merchantId, id)` and filters on both; the route returns 404 `not_found` for another merchant's order (404, not 403, so existence is not leaked). `create` reuses the scoped lookup. Commit B: `POST /api/orders` rejects with 400 `invalid_body` unless `customer_email` is a non-empty string, `total_amount` is a positive integer (`Number.isInteger(x) && x > 0`) and `type` is absent, `'sale'` or `'refund'`. After this task no order can be read across merchants and no non-integer or non-positive amount can enter the table through the API.
+Commit A: `getById` takes `(merchantId, id)` and filters on both; the route returns 404 `not_found` for another merchant's order (404, not 403, so existence is not leaked). `create` reuses the scoped lookup. Commit B: `POST /api/orders` rejects with 400 `invalid_body` unless `customer_email` is a non-empty string, `total_amount` is a positive integer (`Number.isInteger(x) && x > 0`) and `type` is absent, `'sale'` or `'refund'` (**amended 2026-09-18 by Javier: `type` is required, no default; see session log**). After this task no order can be read across merchants and no non-integer or non-positive amount can enter the table through the API.
 
 ## Scope
 
@@ -50,7 +50,7 @@ Commit A: `getById` takes `(merchantId, id)` and filters on both; the route retu
 - Non-existent id → 404 `not_found`.
 - `total_amount` = 0, -1, 10.5, `"100"` (string), missing → 400 `invalid_body`.
 - `total_amount` = 1 → 201.
-- `type` missing → stored as `sale`; `type` = `'refund'` → 201; `type` = `'SALE'`, `'gift'`, `1` → 400.
+- ~~`type` missing → stored as `sale`~~ **amended 2026-09-18: `type` missing → 400**; `type` = `'sale'` or `'refund'` → 201; `type` = `'SALE'`, `'gift'`, `1`, `null` → 400.
 - `customer_email` = `""` or missing or non-string → 400.
 - Body with extra unknown fields → ignored, 201 (no strict schema).
 
@@ -66,7 +66,7 @@ Commit A: `getById` takes `(merchantId, id)` and filters on both; the route retu
 - [ ] `ordersDal.getById('m_a', id)` returns `undefined` for an order belonging to `m_b`.
 - [ ] `GET /:id` returns 404 for another merchant's order and 200 for the owner.
 - [ ] `validateCreateOrderBody` rejects 0, negative, fractional, string and missing amounts.
-- [ ] `validateCreateOrderBody` rejects any `type` outside `sale` / `refund` and defaults a missing type to `sale`.
+- [ ] `validateCreateOrderBody` rejects any `type` outside `sale` / `refund` ~~and defaults a missing type to `sale`~~ **and rejects a missing `type` (amended 2026-09-18)**.
 - [ ] `POST /` returns 400 `invalid_body` for each rejected case and 201 for a valid body.
 - [ ] `docs/api.md` documents the rules and codes.
 - [ ] Two commits, each green.
@@ -75,7 +75,7 @@ Commit A: `getById` takes `(merchantId, id)` and filters on both; the route retu
 
 - Tests to add (file names and what each asserts):
   - `test/orders-dal.test.ts` (created in JS-004; extend): `getById` scoping across two merchants.
-  - `test/orders.test.ts` (exists, holds DAL tests; extend with route tests since the module is `routes/orders.ts`): `GET /:id` 200 own / 404 other / 404 missing; `POST /` table of invalid bodies → 400, valid → 201 with `type` default.
+  - `test/orders.test.ts` (exists, holds DAL tests; extend with route tests since the module is `routes/orders.ts`): `GET /:id` 200 own / 404 other / 404 missing; `POST /` table of invalid bodies → 400, valid → 201 ~~with `type` default~~ (amended 2026-09-18: with explicit `type`; missing `type` is in the invalid table).
   - `test/validate-order.test.ts` if the validator lives in `src/lib/validate-order.ts`.
 - Commands to run: `npm test` (golden gate by hand until JS-006).
 - What to click or call in the dashboard / API to see it working: the two `curl` calls under Expected result, plus a valid POST and `GET /api/orders?limit=1` to see the new row.
@@ -88,3 +88,13 @@ Commit A: `getById` takes `(merchantId, id)` and filters on both; the route retu
 ## Session log
 
 - 2026-09-18 — Contract created in the JS-003 tasks-definition session. Replaces the SQL-injection item after code review showed all queries are parameterized. Javier's decisions: tenant isolation + POST validation in scope; SQL-injection ESLint gate, dependencies and custom errors to Post MVP. No work started.
+- 2026-09-18 — Execution session (Claude Code session `c9c48822-4fb8-46ba-a62e-2cd24be43f40`). Plan approved with three decisions by Javier: (1) blank emails are rejected and the email is stored as sent, no trimming ("Reject blank ones"); (2) the one-argument update of the existing `getById` test in `test/orders.test.ts` approved; (3) unknown `X-Merchant-Id` on POST (FK failure, 500) stays out ("we will only do what is defined in the spec").
+  - Step A: `getById(merchantId, id)`, `create` and `GET /:id` updated, 4 DAL tests + 4 route tests, api.md. Javier asked for terminal commands to verify the 404 himself against the running server before committing; commit `e9f003b`.
+  - Step B: `src/lib/validate-order.ts` (`validateCreateOrderBody`, pure, returns no failure reason), POST route uses it, `test/validate-order.test.ts` (29 cases, table-driven), POST route tests in `test/orders.test.ts` (17: every invalid body returns 400 and stores nothing; body `merchant_id`/`id`/`status` are ignored). api.md and architecture.md updated.
+  - Golden gate by hand: `npx tsc --noEmit` exit 0; `npm test` 92 tests, 92 pass, 0 fail, 0 skipped, 0 todo, 0 cancelled.
+  - Noticed, not fixed: unknown merchant header on POST → FK error → 500; `limit=abc` → 500; no email format check; `detail` string in the revenue 400. The SQL-injection lint gate stays Post MVP with ESLint.
+- 2026-09-18 — Review of step B, before commit B. **Javier rejected one rule Claude had written into the contract and the validator: a missing `type` defaulting to `sale`.** His words: "I think this must be an existing value in the request, we only accept sale or refund and is case-sensitive [...] we are creating an Order - we must know if it is sale or refund and do not decide by default." Done in plan mode:
+  - Impact check: `public/app.js` only issues GETs through one `fetch` helper and `public/index.html` posts nothing, so the dashboard is unaffected (Javier had checked this himself first). The only caller of `ordersDal.create` is the POST route; the seed inserts with raw SQL and always passes `type`.
+  - Change: `validateCreateOrderBody` requires `type`; `?? 'sale'` removed. Test fixtures changed so every rejected case carries a valid `type` and fails for exactly one reason; new cases `type` missing, `type` undefined, `type` null. api.md marks `type` as required and records the behaviour change; architecture.md updated.
+  - Javier's second decision (plan comment): the column default `type TEXT NOT NULL DEFAULT 'sale'` in `src/db.ts` stays, "out of scope since it requires a DDL script". Residual risk recorded in architecture.md (Data model): the DAL requires `type` at compile time, but raw SQL that skips the column would still silently produce a `sale`. Candidate for Javier's Post MVP list.
+  - Golden gate by hand after the amendment: `npx tsc --noEmit` exit 0; `npm test` 96 tests, 96 pass, 0 fail, 0 skipped, 0 todo, 0 cancelled.

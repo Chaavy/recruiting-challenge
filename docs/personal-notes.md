@@ -155,3 +155,48 @@ curl -i -H 'X-Merchant-Id: m_bistro' "localhost:3000/api/orders/$BISTRO_ID"
 Now we get 404 if a tentant A asks for an order of tenant B
 I run npm run test - 46 tests passed 0 failed. I did not check every single line of the tests. 
 Commit B:
+validate-orders.ts is pure with no dependencias a Claude Code said - no DB, no Express. This means that can be tested as pure Domain. 
+One thing I am going to reject about claude code -> type is absent -> default to sale. I think this must be an existing value in the request, we only accept sale or refund and is case-sensitive. I will take this decision because we are creating an Order - we must know if is sale or refund and do not decide by default.
+orders-ts looks good - we validate the input agains the pure function previously created.
+validate-orders.test.ts the very first test -> minimal valid body defaults type to sale should be false for the rule we are going to ask, before checking the test I will ask to fix that specific point (type mandatory) and then look again the tests. After checking the claude Plan I added a commet out of scope - this validation also needs to live in DDL DB level.
+After changes I checked:
+type is obligatory at validate-order.ts level.
+I checked the lines of code for validate-orders.test.ts and checked that there is a case escenario where type is missing and we get response ok:false
+I checked order.test.ts specially for the failure scenarios it contains the checks for amount, email, type, empty and arrayReq all related to failure -> this is ok.
+Validated api.md and also architecture.md in which also says the gap we know about the DB order.
+I ran the unit tests and 96 cases passed, no skipped, no failure.
+I tested by hitting the API: Status successful:
+js@Javiers-MacBook-Pro recruiting-challenge % curl -i -X POST -H 'X-Merchant-Id: m_acme' -H 'Content-Type: application/json' \
+  -d '{"customer_email":"a@b.com","total_amount":1500}' localhost:3000/api/orders
+HTTP/1.1 400 Bad Request
+X-Powered-By: Express
+Content-Type: application/json; charset=utf-8
+Content-Length: 24
+ETag: W/"18-adpEO8bdSSkyS/mBDHdplkwMvDA"
+Date: Fri, 18 Sep 2026 16:50:37 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+{"error":"invalid_body"}
+js@Javiers-MacBook-Pro recruiting-challenge % curl -i -X POST -H 'X-Merchant-Id: m_acme' -H 'Content-Type: application/json' \
+  -d '{"customer_email":"a@b.com","total_amount":1500,"type":"sale"}' localhost:3000/api/orders
+HTTP/1.1 201 Created
+X-Powered-By: Express
+Content-Type: application/json; charset=utf-8
+Content-Length: 195
+ETag: W/"c3-wuY3Q0x18xnDmXio5TkWHRdRalw"
+Date: Fri, 18 Sep 2026 16:53:06 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+{"order":{"id":"60e3acac-24a5-4f6f-a056-8cf74e254bc3","merchant_id":"m_acme","customer_email":"a@b.com","total_amount":1500,"type":"sale","status":"completed","created_at":"2026-09-18 16:53:06"}}                                                                                        
+js@Javiers-MacBook-Pro recruiting-challenge % curl -i -X POST -H 'X-Merchant-Id: m_acme' -H 'Content-Type: application/json' \
+  -d '{"customer_email":"a@b.com","total_amount":1500,"type":""}' localhost:3000/api/orders 
+HTTP/1.1 400 Bad Request
+X-Powered-By: Express
+Content-Type: application/json; charset=utf-8
+Content-Length: 24
+ETag: W/"18-adpEO8bdSSkyS/mBDHdplkwMvDA"
+Date: Fri, 18 Sep 2026 16:53:21 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+{"error":"invalid_body"}
+JS-006

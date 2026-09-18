@@ -17,7 +17,14 @@ Get a single order by ID, scoped to the authenticated merchant.
 - `404 { "error": "not_found" }` when the id does not exist **or belongs to another merchant**. The two cases return the same response on purpose, so the endpoint cannot be used to probe for other merchants' order ids.
 
 ## `POST /api/orders`
-Body: `{ customer_email, total_amount, type? }`.
+Creates an order for the merchant in `X-Merchant-Id`. Body: `{ customer_email, total_amount, type }`. All three fields are required.
+
+- `customer_email`: string, not blank. Stored as sent (no trimming, no format check).
+- `total_amount`: **positive integer, in cents**. `0`, negatives, fractions (`10.5`) and numeric strings (`"100"`) are rejected. A refund is expressed with `type`, never with a negative amount.
+- `type`: **required**, exactly `"sale"` or `"refund"`, case-sensitive. There is no default: a body without `type` is rejected with 400, because whoever creates an order must state which one it is. (Before JS-005 a missing `type` was silently stored as `sale`.)
+- Any other field (`id`, `merchant_id`, `status`, ...) is ignored: the id is generated, the merchant comes from the header, the status is `completed`.
+
+Responses: `201 { "order": { ... } }`; `400 { "error": "invalid_body" }` for any rule above (the response does not say which one).
 
 ## `GET /api/revenue?from=YYYY-MM-DD&to=YYYY-MM-DD`
 Revenue for the merchant in the date range. Both query params are required (`400 { "error": "missing_date_range" }` otherwise).

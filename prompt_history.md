@@ -191,6 +191,54 @@ Commit A done, continue
 **What the model returned:** step B: `src/lib/date-range.ts` (`toExclusiveUpperBound`), `revenueByMerchant` with the shared fragment and `status = 'completed'`, `sumAmountByMerchant` removed, `revenue.ts` updated, `test/date-range.test.ts` (5), 10 revenue cases in `test/orders-dal.test.ts` including the SQLite `CURRENT_TIMESTAMP` format, `test/revenue.test.ts` (4); api.md revenue section and architecture.md `lib/` entry. Gate by hand: `tsc` exit 0; 38 tests, 38 pass, 0 fail/skipped/todo/cancelled. Live check on port 3055 against the seeded DB: `m_acme` revenue 2026-08-19..2026-09-18 = 80940 cents, equal to a direct SQL cross-check; the old formula on the same data gave 148648 (refunds added, today excluded). Task closed: status `done`, session log, moved to `docs/tasks/done/`, INDEX updated, this entry.
 **Accepted / rejected / refined:** pending Javier's line-by-line review and commit B; the `Commits` row of the task file still needs B's SHA.
 
+### Session 4 — JS-005 Tenant isolation and order input validation — 2026-09-18
+
+Session id: `c9c48822-4fb8-46ba-a62e-2cd24be43f40` (same Claude Code session, continued after Javier committed JS-004 B as `3ba0151`).
+
+**Prompt 1 (verbatim):**
+```text
+next task
+```
+**What the model returned:** took JS-005, and a plan in two commits: A `getById(merchantId, id)` with 404 for cross-merchant reads, B a pure validator in `src/lib/validate-order.ts` used by POST. Three questions: trim the email or only reject blanks; approve the forced one-argument edit of the existing test; confirm the unknown-merchant 500 stays out. Also proposed filling JS-004's B SHA.
+**Accepted / rejected / refined:** see prompt 2.
+
+**Prompt 2 (verbatim):**
+```text
+1. Reject blank ones.
+2. Yes I approve the change
+3. stays out - we will only do what is defined in the spec
+
+approved
+```
+**What the model returned:** step A: DAL, route, existing test updated, 4 DAL tests and 4 route tests, api.md; JS-004 `Commits` row filled; task `in-progress`. `tsc` exit 0, 46 tests pass. Stopped for commit A.
+**Accepted / rejected / refined:** Javier did not commit yet; he asked to verify the behaviour himself first (prompt 3).
+
+**Prompt 3 (verbatim):**
+```text
+I would like to test by my self the 404. give me the prompt to test it by terminal. I have the service running
+```
+**What the model returned:** five `curl` steps: capture one order id per merchant, owner 200, other merchant 404, missing id 404 with the same body, and the reverse direction; plus a note that `npm start` does not reload and that comparing with the old behaviour needs `git stash`, which is Javier's to run.
+**Accepted / rejected / refined:** Javier ran the checks and committed A as `e9f003b` ("tenants issue fixed with AND, now tenants get 404 if they try to read orders from ot…").
+
+**Prompt 4 (verbatim):**
+```text
+continue with B
+```
+**What the model returned:** step B: `validateCreateOrderBody`, POST route using it, `test/validate-order.test.ts` (29), 17 POST route tests, api.md and architecture.md. `tsc` exit 0; 92 tests, 92 pass, 0 fail/skipped/todo/cancelled. Task closed: status `done`, session log, moved to `docs/tasks/done/`, INDEX, this entry.
+**Accepted / rejected / refined:** pending Javier's line-by-line review and commit B; the `Commits` row still needs B's SHA.
+
+**Prompt 5 (verbatim, sent in plan mode after reviewing step B):**
+```text
+I will go in plan mode to accept changes before executing.
+
+One thing I am going to reject -> type is absent -> default to sale. I think this must be an existing value in the request, we only accept sale or refund and is case-sensitive - this validation is good for me. I will take this decision because we are creating an Order - we must know if it is sale or refund and do not decide by default.
+
+After that, we also need to update the tests accordingly. As a check, just validate that not frontend is broken with this change, I validate in the app.js and I did not identify any api call to that specific endpoint of orders: POST /api/orders
+```
+(IDE selection at the time: `test/orders.test.ts` line 114, `body`.)
+**What the model returned:** read-only impact check (the dashboard's single `fetch` helper only sends GETs, `index.html` posts nothing, the POST route is the only caller of `ordersDal.create`, the seed always passes `type`), then a plan: make `type` required in the validator, give every invalid-case fixture a valid `type` so each test fails for one reason only, add missing/undefined/null `type` cases, update api.md, architecture.md, the task record and this file. It also pointed out that `src/db.ts` still declares `DEFAULT 'sale'` and proposed leaving it.
+**Accepted / rejected / refined:** Javier stayed in plan mode once to comment on the DB default: "for now we are good with having the validation explicity before actually reaching the orderDal. But in the feature if another service uses orderdDal to create an order we are going to still have the same problem -> default -> sale. We will leave this change out of scope since it requires a DDL script." The model added the nuance that `ordersDal.create` already requires `type` at compile time, so the default is reachable only through raw SQL; recorded as a known gap in architecture.md. Javier approved; the model applied it: `tsc` exit 0; 96 tests, 96 pass, 0 fail/skipped/todo/cancelled.
+
 ---
 
 ## What Claude (or your AI tool) got wrong
@@ -222,3 +270,11 @@ Commit A done, continue
 - **What was wrong with it:** it optimised for the gate text already in `CLAUDE.md` and ignored two constraints Javier had stated in the same session: new dependencies can bring new vulnerabilities (the `npm audit` result was already on the table) and the remaining time budget. The recommendation would have added dependency review and lint-cleanup work to the task that was moved last precisely because of time.
 - **How I caught it:** Javier rejected it in prompt 4: "Eslint add new dependencies which means possible new vulnerabilities could be found - due to the time i have, please move it to post mvp".
 - **What I did instead:** JS-006 contract written with `tsc --noEmit` + `npm test` only, ESLint and the SQL-injection lint gate listed as Post MVP in JS-005/JS-006; flagged that the ESLint bullet in `CLAUDE.md` now needs Javier's own edit.
+
+### Example 4 — recorded by Claude, session 4 [to confirm by Javier]
+
+- **The prompt:** Session 4, prompt 1 ("next task", JS-005 plan) and the JS-005 contract Claude wrote in Session 2; rejected in Session 4, prompt 5.
+- **What Claude returned:** a validator for `POST /api/orders` where a missing `type` defaults to `sale` (`(type as OrderType | undefined) ?? 'sale'`), with the same rule written into the contract's Objective, Edge cases and Acceptance criteria, and a test named "minimal valid body defaults type to sale".
+- **What was wrong with it:** Claude copied the pre-existing behaviour (`type: body.type ?? 'sale'` in the original route) into a task whose whole purpose was to stop invalid data entering the orders table, without questioning it. `type` decides the sign of the amount in revenue and metrics (JS-004), so a client that forgets the field silently records a refund as a sale and inflates revenue. A default on a field that carries business meaning is a guess made on the client's behalf. Claude also did not mention that `src/db.ts` has the same default at column level until Javier's rejection forced the impact check.
+- **How I caught it:** Javier, reviewing the step B diff line by line before committing: "we are creating an Order - we must know if it is sale or refund and do not decide by default."
+- **What I did instead:** `type` is required in `src/lib/validate-order.ts`; tests rewritten so every rejected fixture carries a valid `type` (one failing rule per case) plus explicit missing/undefined/null `type` cases in `test/validate-order.test.ts` and `test/orders.test.ts`; api.md documents the behaviour change; the DB column default is left in place by Javier's decision (needs a DDL migration) and recorded as a known gap in `docs/architecture.md`.

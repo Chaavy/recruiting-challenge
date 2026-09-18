@@ -106,4 +106,83 @@ describe('orders routes', () => {
       assert.equal((await get('/api/orders/order_b', 'm_b')).status, 200);
     });
   });
+  describe('POST /api/orders input validation', () => {
+    function post(body: unknown, merchantId = 'm_a'): Promise<Response> {
+      return fetch(`${base}/api/orders`, {
+        method: 'POST',
+        headers: { 'X-Merchant-Id': merchantId, 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+    }
+
+    function countOrders(merchantId: string): number {
+      const row = db.prepare(`SELECT COUNT(*) AS n FROM orders WHERE merchant_id = ?`).get(merchantId) as { n: number };
+      return row.n;
+    }
+
+    test('valid sale is 201 and the row is stored for the header merchant', async () => {
+      const res = await post({ customer_email: 'bruno@example.com', total_amount: 1500, type: 'sale' });
+      assert.equal(res.status, 201);
+      const body = (await res.json()) as { order: Record<string, unknown> };
+      assert.equal(body.order.merchant_id, 'm_a');
+      assert.equal(body.order.customer_email, 'bruno@example.com');
+      assert.equal(body.order.total_amount, 1500);
+      assert.equal(body.order.type, 'sale');
+      assert.equal(body.order.status, 'completed');
+      assert.equal(countOrders('m_a'), 2);
+    });
+
+    test('type refund is 201', async () => {
+      const res = await post({ customer_email: 'bruno@example.com', total_amount: 700, type: 'refund' });
+      assert.equal(res.status, 201);
+      const body = (await res.json()) as { order: { type: string; total_amount: number } };
+      assert.equal(body.order.type, 'refund');
+      assert.equal(body.order.total_amount, 700);
+    });
+
+    test('merchant_id, id and status in the body are ignored', async () => {
+      const res = await post({
+        customer_email: 'bruno@example.com',
+        total_amount: 1500,
+        type: 'sale',
+        merchant_id: 'm_b',
+        id: 'forced_id',
+        status: 'pending',
+      });
+      assert.equal(res.status, 201);
+      const body = (await res.json()) as { order: { id: string; merchant_id: string; status: string } };
+      assert.equal(body.order.merchant_id, 'm_a');
+      assert.notEqual(body.order.id, 'forced_id');
+      assert.equal(body.order.status, 'completed');
+      assert.equal(countOrders('m_b'), 1);
+    });
+
+    // Each body breaks exactly one rule; the other two fields are valid.
+    const invalidBodies: Array<[string, unknown]> = [
+      ['amount zero', { customer_email: 'a@b.com', total_amount: 0, type: 'sale' }],
+      ['amount negative', { customer_email: 'a@b.com', total_amount: -1, type: 'sale' }],
+      ['amount fractional', { customer_email: 'a@b.com', total_amount: 10.5, type: 'sale' }],
+      ['amount as string', { customer_email: 'a@b.com', total_amount: '100', type: 'sale' }],
+      ['amount missing', { customer_email: 'a@b.com', type: 'sale' }],
+      ['email empty', { customer_email: '', total_amount: 1500, type: 'sale' }],
+      ['email blank', { customer_email: '   ', total_amount: 1500, type: 'sale' }],
+      ['email missing', { total_amount: 1500, type: 'sale' }],
+      ['email not a string', { customer_email: 42, total_amount: 1500, type: 'sale' }],
+      ['type missing (no default)', { customer_email: 'a@b.com', total_amount: 1500 }],
+      ['type null', { customer_email: 'a@b.com', total_amount: 1500, type: null }],
+      ['type uppercase', { customer_email: 'a@b.com', total_amount: 1500, type: 'SALE' }],
+      ['type unknown', { customer_email: 'a@b.com', total_amount: 1500, type: 'gift' }],
+      ['type number', { customer_email: 'a@b.com', total_amount: 1500, type: 1 }],
+      ['empty object', {}],
+      ['array body', [{ customer_email: 'a@b.com', total_amount: 1500, type: 'sale' }]],
+    ];
+    for (const [label, body] of invalidBodies) {
+      test(`${label} is 400 invalid_body and stores nothing`, async () => {
+        const res = await post(body);
+        assert.equal(res.status, 400);
+        assert.deepEqual(await res.json(), { error: 'invalid_body' });
+        assert.equal(countOrders('m_a'), 1);
+      });
+    }
+  });
 });
