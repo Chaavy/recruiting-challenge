@@ -117,3 +117,15 @@ Post MVP - This will not be part of the challenge - out of scope
 6. Escalability - how to prevent application crashes if user interaction grows x10, x100, x1000
 7. Reliability - how do we keep our system running even if a disaster occurs - disaster recovery
 8. MVP / release / branch strategy - designed above (MVPs, release branches, feature/bugfix branches, base branches) but not applied: with ~2.5 hours left all work goes to one branch (feature/javier-sierra-challenge) with one or more commits per task, task IDs JS-nnn in the commit message.
+
+Code changes review:
+JS-004: Day: 18 sep - Hour: 2:40 am.
+Commit A: 
+After I approved the plan for this task I checked the output:
+I validated that completed-only constant is applied correctly to new function: topCustomers. Not a vulnerability a Business rule I accepted.
+Metrics.ts After the fix I validated that there is not connection to Database insted now uses: ordersDal
+2 new unit testing created: I ran by myself the commands: npm test and npx tsc --noEmit -> successful
+Validated that the documentation is also updated
+I also validated the change beyond the plan and I accept the determisitic tie-breaker.
+I did not read every single line of code of the test.
+Commit B:

@@ -9,9 +9,12 @@
 - **`db.ts`** — SQLite connection + schema init. Single shared `db` instance.
 - **`auth.ts`** — request authentication. Today: trusts `X-Merchant-Id` header.
   Eventually this becomes a real signed token; the header shape is a placeholder.
-- **`dal/`** — data-access layer. The intent is that all order queries route
-  through `ordersDal` so we have one place to add auditing, caching, tenancy
-  filters, etc. (Not all routes follow this yet — see `metrics.ts`.)
+- **`dal/`** — data-access layer. All order queries route through `ordersDal`
+  so we have one place to add auditing, caching, tenancy filters, etc. Since
+  JS-004 every route follows this, including `metrics.ts`, which used to open
+  its own read-only connection. Money aggregates (metrics, revenue) share one
+  SQL fragment in the DAL: a completed sale counts positive, a completed refund
+  counts negative, anything else counts 0.
 - **`routes/`** — Express routers, one file per resource.
 - **`lib/`** — utilities. Empty at the moment but reserved for shared helpers.
 

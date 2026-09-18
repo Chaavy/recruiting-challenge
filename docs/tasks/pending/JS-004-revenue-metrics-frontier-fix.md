@@ -2,7 +2,7 @@
 
 | Field    | Value                                  |
 |----------|----------------------------------------|
-| Status   | pending                                |
+| Status   | in-progress                            |
 | Type     | bugfix                                 |
 | Priority | 1                                      |
 | Commits  | filled at close: short SHAs of the commits that ship this task (source for signoff.md) |

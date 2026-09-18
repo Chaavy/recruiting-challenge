@@ -20,7 +20,23 @@ Body: `{ customer_email, total_amount, type? }`.
 Total revenue for the merchant in the date range.
 
 ## `GET /api/metrics/summary`
-TODO: document fields.
+Dashboard summary for the merchant. All queries go through `ordersDal.summaryByMerchant`.
 
-## `GET /api/metrics/top-customers`
-TODO: document fields.
+```json
+{ "merchant_id": "m_acme", "total_orders": 40, "unique_customers": 6, "avg_order_value_cents": 10950 }
+```
+
+- `total_orders`: every order row of the merchant (sales and refunds, any status).
+- `unique_customers`: distinct `customer_email` over every order row.
+- `avg_order_value_cents`: average `total_amount` of **completed sales only**, rounded to integer cents. Refunds and non-completed orders are excluded. `0` when there are no completed sales.
+
+## `GET /api/metrics/top-customers?limit=5`
+Customers ranked by money kept. Optional query `limit` (default 5).
+
+```json
+{ "customers": [ { "customer_email": "ana@example.com", "order_count": 7, "total_spent": 61200 } ] }
+```
+
+- `order_count`: every order row of that customer (sales and refunds, any status).
+- `total_spent`: completed sales minus completed refunds, integer cents. Can be negative.
+- Ordered by `total_spent` descending, then `customer_email` ascending for ties.
